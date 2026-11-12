@@ -12,9 +12,9 @@ export const SITE_DESCRIPTION =
   "Jasa website profesional untuk UMKM Indonesia: Landing Page Statis mulai Rp450.000, Website Custom & hosting statis gratis di webkalcer.com. SSL & auto-deploy GitHub.";
 
 export const OG_IMAGE = {
-  url: SITE_LOGO,
-  width: 1366,
-  height: 500,
+  url: "https://cdn.webkalcer.com/images-web/OG-IMAGE.png",
+  width: 1280,
+  height: 720,
   alt: "WebKalcer — Jasa Pembuatan Website & Hosting Statis Gratis di Indonesia",
 };
 
