@@ -1,0 +1,30 @@
+# WebKalcer
+
+> WebKalcer adalah jasa pembuatan website profesional dan hosting statis gratis untuk UMKM & kreator di Indonesia. Landing Page Statis mulai Rp450.000, Website Custom sesuai kebutuhan, dan hosting statis gratis di subdomain *.webkalcer.com dengan SSL otomatis & auto-deploy setiap push GitHub.
+
+WebKalcer membantu bisnis kecil go online dengan cepat dan terjangkau: desain modern responsif, pemesanan lewat formulir/WhatsApp, hosting gratis selamanya untuk situs statis, dan custom domain.
+
+## Layanan
+
+- [Landing Page Statis](https://webkalcer.com/layanan/landing-page-statis): mulai Rp450.000 — desain modern responsif, hingga 5 halaman, tombol WhatsApp & form kontak, hosting gratis di webkalcer.com, gratis domain .my.id/.web.id
+- [Website Custom](https://webkalcer.com/layanan/website-custom): mulai Rp999.999 — struktur & fitur fleksibel, konsultasi perencanaan, desain sesuai brand, cloud hosting premium, gratis domain .com, support sampai rilis
+- [Hosting Statis Gratis](https://webkalcer.com/layanan/hosting-statis-gratis): hosting statis gratis di subdomain Anda.webkalcer.com — upload ZIP atau hubungkan GitHub, auto-deploy setiap push, SSL & anti-DDoS via Cloudflare, rollback 3 rilis terakhir
+- [Proses Pembuatan](https://webkalcer.com/layanan/proses-pembuatan): tahapan dari konsultasi sampai situs online, estimasi waktu, revisi, dan skema pembayaran yang transparan
+
+## Pesanan & Kontak
+
+- [Pesan & Diskusi](https://webkalcer.com/pesan-dan-diskusi): formulir pemesanan Landing Page Statis atau diskusi Website Custom — data langsung masuk ke email tim
+- [Kontak](https://webkalcer.com/kontak): WhatsApp 0858-0556-6344 (wa.me/6285805566344), sosial media WebKalcer
+- Instagram: https://instagram.com/webkalcer
+- Twitter/X: https://twitter.com/webkalcer
+- GitHub: https://github.com/webkalcer
+
+## Informasi
+
+- [Syarat & Ketentuan](https://webkalcer.com/terms)
+- [Kebijakan Privasi](https://webkalcer.com/privacy)
+
+## Optional
+
+- [Hosting Statis Gratis — detail](https://webkalcer.com/layanan/hosting-statis-gratis): cara deploy, batas kapasitas, dan FAQ hosting
+- [Proses Pembuatan — detail](https://webkalcer.com/layanan/proses-pembuatan): alur lengkap proyek website Anda

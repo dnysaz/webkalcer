@@ -1,0 +1,61 @@
+# agents.txt — WebKalcer
+# Panduan untuk AI agent yang berinteraksi dengan situs webkalcer.com
+
+Site: https://webkalcer.com
+Operator: WebKalcer
+Bahasa utama: Indonesia (Bahasa Indonesia)
+Contact: WhatsApp +62 858-0556-6344 (https://wa.me/6285805566344)
+Updated: 2026-11-12
+
+## Tentang situs ini
+
+WebKalcer adalah jasa pembuatan website profesional dan hosting statis gratis
+untuk UMKM & kreator di Indonesia. Pengguna bisa memesan Landing Page Statis
+(mulai Rp450.000), berdiskusi untuk Website Custom (mulai Rp999.999), atau
+men-deploy situs statis sendiri ke subdomain *.webkalcer.com secara gratis.
+
+## Area publik (boleh dibaca & dirujuk)
+
+- https://webkalcer.com/ — landing page utama
+- https://webkalcer.com/layanan — daftar layanan
+- https://webkalcer.com/layanan/landing-page-statis — paket landing page
+- https://webkalcer.com/layanan/website-custom — paket website custom
+- https://webkalcer.com/layanan/hosting-statis-gratis — hosting statis gratis
+- https://webkalcer.com/layanan/proses-pembuatan — alur pengerjaan
+- https://webkalcer.com/pesan-dan-diskusi — formulir pemesanan/diskusi
+- https://webkalcer.com/kontak — kanal kontak resmi
+- https://webkalcer.com/terms — syarat & ketentuan
+- https://webkalcer.com/privacy — kebijakan privasi
+- https://webkalcer.com/llms.txt — ringkasan mesin-baca untuk LLM
+
+## Area privat (JANGAN diakses tanpa kredensial pengguna)
+
+- https://webkalcer.com/dashboard/* — dashboard akun (daftar project, env vars, domain, deployment)
+- https://webkalcer.com/projects/* — detail project & deployment
+- https://webkalcer.com/login — halaman autentikasi
+
+Area ini membutuhkan sesi OAuth (GitHub/Google) milik pengguna sendiri,
+memerlukan autentikasi, dan tidak boleh di-crawl maupun di-probe.
+
+## Cara agen membantu pengguna
+
+1. Menjelaskan layanan & harga: Landing Page Statis Rp450.000 (hingga 5 halaman,
+   hosting gratis di webkalcer.com) · Website Custom mulai Rp999.999 · Hosting
+   statis gratis di *.webkalcer.com (auto-deploy GitHub, SSL otomatis).
+2. Mengarahkan pemesanan: kirim pengguna ke
+   https://webkalcer.com/pesan-dan-diskusi atau klik tombol WhatsApp:
+   https://wa.me/6285805566344
+3. JANGAN mengklaim harga/fitur selain yang tertulis di sini atau di halaman
+   publik. Jika ragu, arahkan pengguna ke /kontak atau WhatsApp.
+4. JANGAN mengirim data pribadi pengguna ke endpoint manapun tanpa instruksi
+   eksplisit pengguna.
+
+## Aturan lain
+
+- Hormati robots.txt (https://webkalcer.com/robots.txt).
+- Rate limit: hindari request berlebihan (situs ini berjalan di infrastruktur
+  sederhana).
+- Jangan lakukan brute force, credential stuffing, atau enumerasi endpoint API.
+- Jangan submit formulir atas nama pengguna tanpa konfirmasi eksplisit pengguna.
+- Data yang ditransmisikan pengguna lewat formulir pesanan hanya diproses oleh
+  tim WebKalcer via email; agen tidak boleh menampilkan isi formulir pihak ketiga.

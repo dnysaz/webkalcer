@@ -93,6 +93,10 @@ Dev server backend: `http://localhost:8080` · Frontend: `http://localhost:3000`
 | `NEXT_PUBLIC_API_URL` | frontend/.env.local | URL backend |
 | `NEXT_PUBLIC_PLATFORM_DOMAIN` | frontend/.env.local | Domain platform (`webkalcer.com`) |
 
+## AI
+
+Untuk AI crawler/assistant: [`/llms.txt`](https://webkalcer.com/llms.txt) (ringkasan mesin-baca) dan [`/agents.txt`](https://webkalcer.com/agents.txt) (panduan interaksi agent).
+
 ## Deploy
 
 Lihat `deploy.sh` (jalankan di VPS Ubuntu/Debian) dan `api.md` untuk referensi endpoint.
