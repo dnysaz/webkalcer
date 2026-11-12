@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* Design tokens — dipindah dari landing page example (Tailwind CDN config) */
+@theme {
+  --color-ink: #202124;
+  --color-mute: #5f6368;
+  --color-blue: #1a73e8;
+  --color-red: #d93025;
+  --color-orange: #ea6a12;
+  --color-soft: #f1f3f4;
+  --color-line: #dadce0;
+
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
+  --font-mono: var(--font-roboto-mono), monospace;
+}
+
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+}
+
+body {
+  background: #fff;
+  color: var(--color-ink);
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+.wrap {
+  width: 100%;
+  padding-inline: clamp(20px, 5vw, 96px);
+}
+
+.btn {
+  transition:
+    filter 0.15s,
+    box-shadow 0.15s;
+}
+
+.btn:hover {
+  filter: brightness(0.92);
+  box-shadow: 0 4px 14px rgba(32, 33, 36, 0.18);
+}
