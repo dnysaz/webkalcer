@@ -1,9 +1,13 @@
-# Dependencies
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node modules
 node_modules/
 Frontend/node_modules/
-
-# Next.js build output
-.next/
 Frontend/.next/
 out/
 
@@ -33,11 +37,17 @@ backend/data/cache/
 *.log
 npm-debug.log*
 
+# SSH credentials (gitignored)
+ssh.txt
+
+# Deployment tarball (fallback)
+/tmp/webkalcer-deploy.tar.gz
+
+# Example landing page (reference only)
+Example Landing Page/
+
 # OS / editor
 .DS_Store
 .idea/
 .vscode/
 *.swp
-
-# Example landing page (reference only)
-Example Landing Page/
