@@ -59,7 +59,10 @@ export default function DashboardNavbar() {
           href="/"
           className="flex items-center gap-2"
           aria-label="WebKalcer — ke beranda"
-          onClick={() => setNavOpen(false)}
+          onClick={() => {
+            setNavOpen(false);
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }}
         >
           <SiteLogo height={25} mobileHeight={16} />
         </Link>

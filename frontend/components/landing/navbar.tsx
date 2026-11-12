@@ -25,7 +25,14 @@ export default function LandingNavbar({
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur">
       <div className="wrap flex h-16 items-center justify-between gap-4 sm:h-20">
-        <Link href="/" aria-label="WebKalcer" onClick={() => setOpen(false)}>
+        <Link
+          href="/"
+          aria-label="WebKalcer"
+          onClick={() => {
+            setOpen(false);
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }}
+        >
           <SiteLogo height={27} mobileHeight={18} />
         </Link>
         {!hideLinks && (
