@@ -93,7 +93,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <LandingNavbar hideCta />
+      <LandingNavbar hideCta hideLinks />
       <main className="relative flex flex-1 items-center bg-white">
       {/* ===== Panel kiri: branding (layar besar) — gaya homepage ===== */}
       <div className="relative hidden h-full flex-1 flex-col justify-between gap-12 overflow-y-auto border-r border-line p-12 xl:flex 2xl:p-16">

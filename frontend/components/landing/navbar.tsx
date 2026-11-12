@@ -15,8 +15,10 @@ const NAV_LINKS = [
 
 export default function LandingNavbar({
   hideCta = false,
+  hideLinks = false,
 }: {
   hideCta?: boolean;
+  hideLinks?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -26,13 +28,15 @@ export default function LandingNavbar({
         <Link href="/" aria-label="WebKalcer" onClick={() => setOpen(false)}>
           <SiteLogo height={27} mobileHeight={18} />
         </Link>
-        <nav className="hidden items-center gap-9 text-base text-mute lg:flex">
-          {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="hover:text-ink">
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        {!hideLinks && (
+          <nav className="hidden items-center gap-9 text-base text-mute lg:flex">
+            {NAV_LINKS.map((link) => (
+              <a key={link.href} href={link.href} className="hover:text-ink">
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        )}
         <div className="flex items-center gap-2">
           {!hideCta && (
             <Link
@@ -42,23 +46,25 @@ export default function LandingNavbar({
               Masuk
             </Link>
           )}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Tutup menu" : "Buka menu"}
-            aria-expanded={open}
-            className="grid h-11 w-11 place-items-center rounded-full text-xl text-ink hover:bg-soft lg:hidden"
-          >
-            <i
-              className={open ? "fa-solid fa-xmark" : "fa-solid fa-bars"}
-              aria-hidden="true"
-            />
-          </button>
+          {!hideLinks && (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Tutup menu" : "Buka menu"}
+              aria-expanded={open}
+              className="grid h-11 w-11 place-items-center rounded-full text-xl text-ink hover:bg-soft lg:hidden"
+            >
+              <i
+                className={open ? "fa-solid fa-xmark" : "fa-solid fa-bars"}
+                aria-hidden="true"
+              />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Panel menu mobile */}
-      {open && (
+      {open && !hideLinks && (
         <div className="border-t border-line bg-white lg:hidden">
           <nav className="wrap flex flex-col py-3">
             {NAV_LINKS.map((link) => (
