@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import ServiceShell, { ServiceCta } from "@/components/landing/service-shell";
 import { ProdukIllustration } from "@/components/ilustrasi";
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   title: "Landing Page Statis — WebKalcer",
   description:
     "Landing page statis mulai Rp450.000: desain modern responsif, hingga 5 halaman, tombol WhatsApp & form kontak, hosting gratis di webkalcer.com, gratis domain .my.id/.web.id.",
+  ...pageSocial("Landing Page Statis — WebKalcer", "Landing page statis mulai Rp450.000: desain modern responsif, hingga 5 halaman, tombol WhatsApp & form kontak, hosting gratis di webkalcer.com, gratis domain .my.id/.web.id.", "/layanan/landing-page-statis"),
 };
 
 export default function LandingPageStatisPage() {

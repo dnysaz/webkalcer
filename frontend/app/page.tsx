@@ -12,6 +12,43 @@ import Footer from "@/components/landing/footer";
 
 const SITE_DOMAIN = "webkalcer.com";
 
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://webkalcer.com/#organization",
+      name: "WebKalcer",
+      url: "https://webkalcer.com",
+      logo: "https://cdn.webkalcer.com/images-web/webkalcer-logo.png",
+      description:
+        "Jasa pembuatan website profesional dan hosting statis gratis untuk UMKM & kreator di Indonesia.",
+      areaServed: { "@type": "Country", name: "Indonesia" },
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+62-858-0556-6344",
+        contactType: "customer support",
+        availableLanguage: ["Indonesian", "English"],
+      },
+      sameAs: [
+        "https://instagram.com/webkalcer",
+        "https://twitter.com/webkalcer",
+        "https://github.com/webkalcer",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://webkalcer.com/#website",
+      url: "https://webkalcer.com",
+      name: "WebKalcer",
+      description:
+        "Jasa pembuatan website profesional untuk UMKM & kreator Indonesia: Landing Page Statis mulai Rp450.000 & hosting statis gratis di webkalcer.com.",
+      inLanguage: "id-ID",
+      publisher: { "@id": "https://webkalcer.com/#organization" },
+    },
+  ],
+};
+
 function SectionLabel({ color, children }: { color: string; children: string }) {
   return (
     <p className="flex items-center gap-2 text-base font-medium">
@@ -416,6 +453,11 @@ export default function LandingPage() {
       </main>
 
       <Footer />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
     </>
   );
 }

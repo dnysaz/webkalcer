@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import LegalDoc, { type LegalSection } from "@/components/landing/legal-doc";
 
 export const metadata: Metadata = {
   title: "Kebijakan Privasi — WebKalcer",
   description:
     "Bagaimana WebKalcer mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi Anda — termasuk data akun, deployment, environment variables, dan cookie.",
+  ...pageSocial("Kebijakan Privasi — WebKalcer", "Bagaimana WebKalcer mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi Anda — termasuk data akun, deployment, environment variables, dan cookie.", "/privacy"),
 };
 
 const sections: LegalSection[] = [

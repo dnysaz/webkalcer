@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import LegalDoc, { type LegalSection } from "@/components/landing/legal-doc";
 
 export const metadata: Metadata = {
   title: "Syarat & Ketentuan — WebKalcer",
   description:
     "Syarat dan ketentuan penggunaan layanan WebKalcer: pembuatan website, hosting statis gratis di webkalcer.com, pemesanan, pembayaran, dan batasan tanggung jawab.",
+  ...pageSocial("Syarat & Ketentuan — WebKalcer", "Syarat dan ketentuan penggunaan layanan WebKalcer: pembuatan website, hosting statis gratis di webkalcer.com, pemesanan, pembayaran, dan batasan tanggung jawab.", "/terms"),
 };
 
 const sections: LegalSection[] = [

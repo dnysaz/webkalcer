@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import PaketForm from "@/components/pesan/paket-form";
 import { PAKET, type PaketKey } from "@/components/pesan/paket-data";
 import LandingNavbar from "@/components/landing/navbar";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: "Pesan & Diskusi — WebKalcer",
   description:
     "Pesan Landing Page Statis atau diskusikan kebutuhan Website Custom Anda dengan tim WebKalcer.",
+  ...pageSocial("Pesan & Diskusi — WebKalcer", "Pesan Landing Page Statis atau diskusikan kebutuhan Website Custom Anda dengan tim WebKalcer.", "/pesan-dan-diskusi"),
 };
 
 export default async function PesanDanDiskusiPage({

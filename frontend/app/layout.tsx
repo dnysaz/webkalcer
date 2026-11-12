@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import FloatingWhatsApp from "@/components/floating-wa";
+import { pageSocial, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -16,11 +17,52 @@ const robotoMono = Roboto_Mono({
   weight: ["500"],
 });
 
+const HOME_TITLE =
+  "WebKalcer — Jasa Pembuatan Website & Hosting Statis Gratis di Indonesia";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://webkalcer.com"),
-  title: "WebKalcer — Jasa Pembuatan Website & Hosting Statis Gratis di Indonesia",
-  description:
-    "Jasa pembuatan website profesional mulai Rp450.000 dan hosting statis gratis di Indonesia.",
+  applicationName: "WebKalcer",
+  title: HOME_TITLE,
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "jasa pembuatan website",
+    "jasa website profesional",
+    "landing page statis",
+    "landing page mulai Rp450.000",
+    "website custom",
+    "hosting statis gratis",
+    "hosting gratis indonesia",
+    "jasa website UMKM",
+    "bikin website murah",
+    "deploy website gratis",
+    "WebKalcer",
+  ],
+  authors: [{ name: "WebKalcer", url: "https://webkalcer.com" }],
+  creator: "WebKalcer",
+  publisher: "WebKalcer",
+  category: "technology",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
+  ...pageSocial(HOME_TITLE, SITE_DESCRIPTION, "/"),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import LandingNavbar from "@/components/landing/navbar";
 import Footer from "@/components/landing/footer";
@@ -25,6 +26,7 @@ export const metadata: Metadata = {
   title: "Layanan — WebKalcer",
   description:
     "WebKalcer untuk personal branding, landing page perusahaan, website custom, berita, dashboard, toko online, SaaS, BaaS, UMKM, retail, instansi, tech stack modern, AI, dan server berkualitas.",
+  ...pageSocial("Layanan — WebKalcer", "WebKalcer untuk personal branding, landing page perusahaan, website custom, berita, dashboard, toko online, SaaS, BaaS, UMKM, retail, instansi, tech stack modern, AI, dan server berkualitas.", "/layanan"),
 };
 
 type UseCase = {

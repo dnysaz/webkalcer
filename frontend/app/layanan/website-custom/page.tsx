@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import ServiceShell, { ServiceCta } from "@/components/landing/service-shell";
 import { PortofolioIllustration } from "@/components/ilustrasi";
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   title: "Website Custom — WebKalcer",
   description:
     "Website custom mulai Rp999.999: struktur & fitur fleksibel, konsultasi perencanaan, desain sesuai identitas brand, cloud hosting premium, gratis domain .com, support sampai rilis.",
+  ...pageSocial("Website Custom — WebKalcer", "Website custom mulai Rp999.999: struktur & fitur fleksibel, konsultasi perencanaan, desain sesuai identitas brand, cloud hosting premium, gratis domain .com, support sampai rilis.", "/layanan/website-custom"),
 };
 
 export default function WebsiteCustomPage() {

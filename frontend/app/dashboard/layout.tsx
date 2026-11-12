@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { AuthProvider } from "@/components/dashboard/auth-provider";
 import DashboardNavbar from "@/components/dashboard/navbar";
 import Footer from "@/components/landing/footer";
+
+export const metadata: Metadata = {
+  title: "Dashboard — WebKalcer",
+  robots: { index: false, follow: false },
+};
 
 export default function DashboardLayout({
   children,

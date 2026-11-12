@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import ServiceShell, { ServiceCta } from "@/components/landing/service-shell";
 import { ProsesIllustration } from "@/components/ilustrasi";
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   title: "Proses Pembuatan — WebKalcer",
   description:
     "Cara kerja WebKalcer dari konsultasi sampai situs online: tahapan, estimasi waktu, apa yang perlu Anda siapkan, revisi, dan skema pembayaran yang transparan.",
+  ...pageSocial("Proses Pembuatan — WebKalcer", "Cara kerja WebKalcer dari konsultasi sampai situs online: tahapan, estimasi waktu, apa yang perlu Anda siapkan, revisi, dan skema pembayaran yang transparan.", "/layanan/proses-pembuatan"),
 };
 
 const STEPS = [

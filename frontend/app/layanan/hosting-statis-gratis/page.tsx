@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import ServiceShell, { ServiceCta } from "@/components/landing/service-shell";
 import { HostingIllustration } from "@/components/ilustrasi";
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   title: "Hosting Statis Gratis — WebKalcer",
   description:
     "Hosting statis gratis di subdomain Anda.webkalcer.com: upload ZIP atau hubungkan GitHub, deploy otomatis setiap push, SSL & anti-DDoS via Cloudflare, rollback 3 rilis terakhir.",
+  ...pageSocial("Hosting Statis Gratis — WebKalcer", "Hosting statis gratis di subdomain Anda.webkalcer.com: upload ZIP atau hubungkan GitHub, deploy otomatis setiap push, SSL & anti-DDoS via Cloudflare, rollback 3 rilis terakhir.", "/layanan/hosting-statis-gratis"),
 };
 
 export default function HostingStatisPage() {

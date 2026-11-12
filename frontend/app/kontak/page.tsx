@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageSocial } from "@/lib/seo";
 import Link from "next/link";
 import LandingNavbar from "@/components/landing/navbar";
 import Footer from "@/components/landing/footer";
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
   title: "Kontak Kami — WebKalcer",
   description:
     "Hubungi tim WebKalcer untuk konsultasi pembuatan website, hosting statis gratis, custom domain, dan dukungan teknis — lewat WhatsApp, email, atau media sosial.",
+  ...pageSocial("Kontak Kami — WebKalcer", "Hubungi tim WebKalcer untuk konsultasi pembuatan website, hosting statis gratis, custom domain, dan dukungan teknis — lewat WhatsApp, email, atau media sosial.", "/kontak"),
 };
 
 const CHANNELS = [
