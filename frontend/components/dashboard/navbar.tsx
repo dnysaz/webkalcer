@@ -61,7 +61,7 @@ export default function DashboardNavbar() {
           aria-label="WebKalcer — ke beranda"
           onClick={() => setNavOpen(false)}
         >
-          <SiteLogo height={25} mobileHeight={20} />
+          <SiteLogo height={25} mobileHeight={16} />
         </Link>
 
         <nav className="hidden items-center gap-1 text-base md:flex">

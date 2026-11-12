@@ -44,7 +44,7 @@ export default function Footer() {
           {/* Kolom 1: Tentang */}
           <div className="col-span-1 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <SiteLogo height={25} mobileHeight={20} />
+              <SiteLogo height={25} mobileHeight={16} />
             </div>
             <p className="text-base text-mute leading-relaxed max-w-sm">
               Jasa pembuatan website profesional dan hosting statis gratis di

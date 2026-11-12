@@ -52,3 +52,43 @@ h3 {
   filter: brightness(0.92);
   box-shadow: 0 4px 14px rgba(32, 33, 36, 0.18);
 }
+
+/* SiteLogo (components/site-logo.tsx) — satu <img>, ukuran responsif via CSS.
+   Rasio dihitung dari kotak glyph asli (1307×188 di kanvas 1366×500):
+   img height = h × 500/188 = 2.6596h ; img width = h × 1366/188 = 7.2659h ;
+   top = -116/188 × h = -0.617h ; left = -26/188 × h = -0.1383h ;
+   wrapper width = h × 1307/188 = 6.949h. */
+.site-logo {
+  --sl-h: 36px;
+  --sl-mh: var(--sl-h);
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  overflow: hidden;
+  vertical-align: middle;
+  height: var(--sl-mh);
+  width: calc(var(--sl-mh) * 6.949);
+}
+
+.site-logo > img {
+  position: absolute;
+  max-width: none;
+  height: calc(var(--sl-mh) * 2.6596);
+  width: calc(var(--sl-mh) * 7.2659);
+  top: calc(var(--sl-mh) * -0.617);
+  left: calc(var(--sl-mh) * -0.1383);
+}
+
+@media (min-width: 640px) {
+  .site-logo {
+    height: var(--sl-h);
+    width: calc(var(--sl-h) * 6.949);
+  }
+
+  .site-logo > img {
+    height: calc(var(--sl-h) * 2.6596);
+    width: calc(var(--sl-h) * 7.2659);
+    top: calc(var(--sl-h) * -0.617);
+    left: calc(var(--sl-h) * -0.1383);
+  }
+}
