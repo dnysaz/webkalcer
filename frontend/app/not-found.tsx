@@ -6,35 +6,79 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-soft flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-10 text-center shadow-sm">
-        <div
-          aria-hidden="true"
-          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-soft"
-        >
-          <svg viewBox="0 0 24 24" className="h-10 w-10 text-mute" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <line x1="5" y1="1" x2="19" y2="1" />
-            <line x1="5" y1="23" x2="19" y2="23" />
-            <line x1="9" y1="9" x2="15" y2="15" />
-            <line x1="15" y1="9" x2="9" y2="15" />
+    <main className="relative min-h-screen w-full overflow-hidden bg-[#f8fafb] font-sans">
+      {/* Brand top-left — Google-style placement */}
+      <div className="absolute left-0 top-0 p-6 sm:p-8">
+        <Link href="/" className="flex h-8 w-auto items-center text-xl font-bold tracking-tight" aria-label="WebKalcer home">
+          <span className="text-blue">Web</span>
+          <span className="text-red">Kal</span>
+          <span className="text-orange">cer</span>
+        </Link>
+      </div>
+
+      {/* Decorative Google palette dots (top-right corner) */}
+      <div className="pointer-events-none absolute right-4 top-4 opacity-60 sm:right-12 sm:top-12" aria-hidden="true">
+        <svg width="180" height="180" viewBox="0 0 180 180" fill="none" className="hidden sm:block">
+          <circle cx="155" cy="18" r="8" fill="#1A73E8" />
+          <circle cx="125" cy="35" r="5.5" fill="#D93025" />
+          <circle cx="92" cy="12" r="4.5" fill="#F9AB00" />
+          <circle cx="160" cy="52" r="4" fill="#34A853" />
+        </svg>
+      </div>
+
+      {/* Content */}
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-20 text-center">
+        {/* Big typographic 404 */}
+        <div className="relative z-10 select-none">
+          <h1
+            aria-hidden="true"
+            className="text-[9rem] font-medium leading-none tracking-[-0.08em] text-ink sm:text-[12rem] md:text-[14rem]"
+          >
+            <span className="text-blue">4</span>
+            <span className="text-red">0</span>
+            <span className="text-orange">4</span>
+          </h1>
+          {/* Highlight stroke / shadow behind 404 */}
+          <svg className="pointer-events-none absolute inset-0 -z-10 h-full w-full" aria-hidden="true">
+            <defs>
+              <radialGradient id="soft-glow" cx="50%" cy="50%" r="70%">
+                <stop offset="0%" stopColor="#1A73E8" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#1A73E8" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <ellipse cx="50%" cy="60%" rx="60%" ry="40%" fill="url(#soft-glow)" />
           </svg>
         </div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-blue">Error 404</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Halaman tidak ditemukan</h1>
-        <p className="mt-3 text-sm leading-6 text-mute">
-          Maaf, halaman yang Anda cari tidak ada atau sudah dipindahkan. Periksa kembali URL-nya.
-        </p>
-        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+
+        {/* Subcopy — minimal text, Google-like tone */}
+        <div className="mt-2 flex flex-col items-center sm:mt-4">
+          <p className="text-lg font-medium text-ink sm:text-xl">Halaman tidak ditemukan</p>
+          <p className="mt-2 max-w-md text-sm leading-6 text-mute sm:text-base">
+            URL tidak ada atau mungkin sudah dipindahkan.
+            <br />
+            Periksa kembali alamatnya.
+          </p>
+        </div>
+
+        {/* Primary CTA (Google button style) */}
+        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
           <Link
             href="/"
-            className="inline-flex items-center rounded-lg bg-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-transparent bg-blue px-8 text-sm font-medium text-white shadow-sm transition hover:bg-[#1557b0] active:translate-y-[1px]"
           >
             Kembali ke Beranda
           </Link>
-          <Link href="/kontak" className="text-sm font-semibold text-blue hover:underline">
+          <Link
+            href="/kontak"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-line bg-white px-8 text-sm font-medium text-blue transition hover:bg-[#f8f9fa]"
+          >
             Hubungi Kami
           </Link>
+        </div>
+
+        {/* Footer — subtle */}
+        <div className="mt-16 text-[10px] uppercase tracking-widest text-gray-400">
+          WebKalcer — Jasa Pembuatan Website &amp; Hosting Statis Gratis
         </div>
       </div>
     </main>

@@ -15,39 +15,37 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="min-h-screen bg-soft flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-10 text-center shadow-sm">
-        <div
-          aria-hidden="true"
-          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-soft"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-10 w-10 text-red"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-        </div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-red">Error 500</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink">Terjadi kesalahan</h1>
-        <p className="mt-3 text-sm leading-6 text-mute">
-          Maaf, terjadi kesalahan yang tidak terduga. Silakan coba lagi, atau kembali ke beranda.
+    <main className="relative min-h-screen w-full overflow-hidden bg-[#f8fafb] font-sans">
+      <div className="absolute left-0 top-0 p-6 sm:p-8">
+        <Link href="/" className="flex h-8 w-auto items-center text-xl font-bold tracking-tight">
+          <span className="text-blue">Web</span>
+          <span className="text-red">Kal</span>
+          <span className="text-orange">cer</span>
+        </Link>
+      </div>
+
+      <div className="mx-auto flex min-h-screen max-w-4xl flex-col items-center justify-center px-6 py-20 text-center">
+        <h1 className="select-none text-[8rem] leading-none tracking-[-0.08em] sm:text-[11rem]">
+          <span className="text-red">5</span>
+          <span className="text-orange">0</span>
+          <span className="text-ink">0</span>
+        </h1>
+        <p className="mt-2 text-xl font-medium text-ink">Terjadi kesalahan</p>
+        <p className="mt-3 max-w-md text-sm leading-6 text-mute sm:text-base">
+          Server mengalami gangguan saat memuat halaman ini. Tim kami sudah diberitahu.
         </p>
-        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+
+        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
           <button
             onClick={reset}
-            className="inline-flex items-center rounded-lg bg-orange px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-95"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-transparent bg-orange px-8 text-sm font-medium text-white shadow-sm transition hover:brightness-95 active:translate-y-[1px]"
           >
             Coba Lagi
           </button>
-          <Link href="/" className="text-sm font-semibold text-blue hover:underline">
+          <Link
+            href="/"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-line bg-white px-8 text-sm font-medium text-blue transition hover:bg-[#f8f9fa]"
+          >
             Kembali ke Beranda
           </Link>
         </div>
