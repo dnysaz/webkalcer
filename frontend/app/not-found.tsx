@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-[#f8fafb] font-sans">
+    <main className="relative min-h-screen w-full overflow-hidden font-sans">
       {/* Brand top-left — Google-style placement */}
       <div className="absolute left-0 top-0 p-6 sm:p-8">
         <Link href="/" className="flex h-8 w-auto items-center text-xl font-bold tracking-tight" aria-label="WebKalcer home">
@@ -26,19 +26,15 @@ export default function NotFound() {
         </svg>
       </div>
 
-      {/* Content */}
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-20 text-center">
-        {/* Big typographic 404 */}
+      {/* Content — same font stack as homepage (Roboto) */}
+      <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-20 text-center font-sans">
         <div className="relative z-10 select-none">
           <h1
             aria-hidden="true"
-            className="text-[9rem] font-medium leading-none tracking-[-0.08em] text-ink sm:text-[12rem] md:text-[14rem]"
+            className="text-[9rem] font-medium leading-none tracking-[-0.08em] text-blue sm:text-[12rem] md:text-[14rem]"
           >
-            <span className="text-blue">4</span>
-            <span className="text-red">0</span>
-            <span className="text-orange">4</span>
+            404
           </h1>
-          {/* Highlight stroke / shadow behind 404 */}
           <svg className="pointer-events-none absolute inset-0 -z-10 h-full w-full" aria-hidden="true">
             <defs>
               <radialGradient id="soft-glow" cx="50%" cy="50%" r="70%">
@@ -50,33 +46,30 @@ export default function NotFound() {
           </svg>
         </div>
 
-        {/* Subcopy — minimal text, Google-like tone */}
         <div className="mt-2 flex flex-col items-center sm:mt-4">
-          <p className="text-lg font-medium text-ink sm:text-xl">Halaman tidak ditemukan</p>
-          <p className="mt-2 max-w-md text-sm leading-6 text-mute sm:text-base">
+          <p className="text-2xl font-medium text-ink sm:text-3xl">Halaman tidak ditemukan</p>
+          <p className="mt-3 max-w-md text-lg leading-7 text-mute sm:text-xl sm:leading-8">
             URL tidak ada atau mungkin sudah dipindahkan.
             <br />
             Periksa kembali alamatnya.
           </p>
         </div>
 
-        {/* Primary CTA (Google button style) */}
-        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center gap-3 sm:flex-row">
           <Link
             href="/"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-transparent bg-blue px-8 text-sm font-medium text-white shadow-sm transition hover:bg-[#1557b0] active:translate-y-[1px]"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-transparent bg-blue px-8 text-base font-medium text-white shadow-sm transition hover:bg-[#1557b0] active:translate-y-[1px]"
           >
             Kembali ke Beranda
           </Link>
           <Link
             href="/kontak"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-line bg-white px-8 text-sm font-medium text-blue transition hover:bg-[#f8f9fa]"
+            className="inline-flex h-12 items-center justify-center rounded-full border border-line bg-white px-8 text-base font-medium text-blue transition hover:bg-[#f8f9fa]"
           >
             Hubungi Kami
           </Link>
         </div>
 
-        {/* Footer — subtle */}
         <div className="mt-16 text-[10px] uppercase tracking-widest text-gray-400">
           WebKalcer — Jasa Pembuatan Website &amp; Hosting Statis Gratis
         </div>
