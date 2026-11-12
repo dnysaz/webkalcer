@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import SiteLogo from "@/components/site-logo";
 
 const NAV_LINKS = [
   { href: "/layanan", label: "Layanan" },
@@ -12,16 +13,6 @@ const NAV_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 
-function Logo() {
-  return (
-    <span className="text-2xl font-medium tracking-tight">
-      <span className="text-blue">Web</span>
-      <span className="text-red">Kal</span>
-      <span className="text-orange">cer</span>
-    </span>
-  );
-}
-
 export default function LandingNavbar() {
   const [open, setOpen] = useState(false);
 
@@ -29,7 +20,7 @@ export default function LandingNavbar() {
     <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur">
       <div className="wrap flex h-16 items-center justify-between gap-4 sm:h-20">
         <Link href="/" aria-label="WebKalcer" onClick={() => setOpen(false)}>
-          <Logo />
+          <SiteLogo height={27} mobileHeight={22} />
         </Link>
         <nav className="hidden items-center gap-9 text-base text-mute lg:flex">
           {NAV_LINKS.map((link) => (

@@ -8,6 +8,7 @@ import {
   loginUrl,
   type AuthProviders,
 } from "@/lib/api";
+import SiteLogo from "@/components/site-logo";
 
 type Provider = "github" | "google";
 
@@ -141,11 +142,7 @@ export default function LoginPage() {
       {/* ===== Panel kanan: form (tidak diubah) ===== */}
       <div className="relative flex flex-1 items-center justify-center p-6 py-10 sm:p-10">
         <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-[0_8px_30px_rgba(32,33,36,0.08)] sm:p-10">
-        <p className="text-2xl font-medium tracking-tight">
-          <span className="text-blue">Web</span>
-          <span className="text-red">Kal</span>
-          <span className="text-orange">cer</span>
-        </p>
+        <SiteLogo height={30} mobileHeight={25} />
         <h1 className="mt-6 text-3xl font-medium">Masuk dulu, yuk.</h1>
         <p className="mt-2 text-mute">
           Deploy website dari repository GitHub atau upload ZIP — gratis.

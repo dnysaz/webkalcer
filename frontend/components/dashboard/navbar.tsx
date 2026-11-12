@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/dashboard/auth-provider";
+import SiteLogo from "@/components/site-logo";
 
 const MENU = [
   { href: "/dashboard", label: "Dashboard", icon: "fa-solid fa-gauge-high" },
@@ -60,11 +61,7 @@ export default function DashboardNavbar() {
           aria-label="WebKalcer — ke beranda"
           onClick={() => setNavOpen(false)}
         >
-          <span className="text-2xl font-medium tracking-tight">
-            <span className="text-blue">Web</span>
-            <span className="text-red">Kal</span>
-            <span className="text-orange">cer</span>
-          </span>
+          <SiteLogo height={25} mobileHeight={20} />
         </Link>
 
         <nav className="hidden items-center gap-1 text-base md:flex">

@@ -1,14 +1,6 @@
 "use client";
 
-function Logo() {
-  return (
-    <span className="text-2xl font-medium tracking-tight">
-      <span className="text-blue">Web</span>
-      <span className="text-red">Kal</span>
-      <span className="text-orange">cer</span>
-    </span>
-  );
-}
+import SiteLogo from "@/components/site-logo";
 
 function FooterHeading({ children }: { children: string }) {
   return (
@@ -52,7 +44,7 @@ export default function Footer() {
           {/* Kolom 1: Tentang */}
           <div className="col-span-1 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Logo />
+              <SiteLogo height={25} mobileHeight={20} />
             </div>
             <p className="text-base text-mute leading-relaxed max-w-sm">
               Jasa pembuatan website profesional dan hosting statis gratis di
