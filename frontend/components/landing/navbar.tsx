@@ -13,7 +13,11 @@ const NAV_LINKS = [
   { href: "/kontak", label: "Kontak" },
 ];
 
-export default function LandingNavbar() {
+export default function LandingNavbar({
+  hideCta = false,
+}: {
+  hideCta?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -30,12 +34,14 @@ export default function LandingNavbar() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="btn rounded-full bg-blue px-5 py-2 text-base font-medium text-white sm:px-6 sm:py-2.5"
-          >
-            Masuk
-          </Link>
+          {!hideCta && (
+            <Link
+              href="/login"
+              className="btn rounded-full bg-blue px-5 py-2 text-base font-medium text-white sm:px-6 sm:py-2.5"
+            >
+              Masuk
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}

@@ -9,6 +9,8 @@ import {
   type AuthProviders,
 } from "@/lib/api";
 import SiteLogo from "@/components/site-logo";
+import LandingNavbar from "@/components/landing/navbar";
+import Footer from "@/components/landing/footer";
 
 type Provider = "github" | "google";
 
@@ -90,7 +92,9 @@ export default function LoginPage() {
   const googleDisabled = checking || redirecting !== null || providers?.google === false;
 
   return (
-    <main className="relative flex flex-1 items-center bg-white">
+    <>
+      <LandingNavbar hideCta />
+      <main className="relative flex flex-1 items-center bg-white">
       {/* ===== Panel kiri: branding (layar besar) — gaya homepage ===== */}
       <div className="relative hidden h-full flex-1 flex-col justify-between gap-12 overflow-y-auto border-r border-line p-12 xl:flex 2xl:p-16">
         <div className="flex items-center gap-2">
@@ -216,7 +220,9 @@ export default function LoginPage() {
         </p>
         </div>
       </div>
-    </main>
+      </main>
+      <Footer />
+    </>
   );
 }
 
