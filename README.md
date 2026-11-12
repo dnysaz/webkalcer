@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://cdn.webkalcer.com/images-web/webkalcer-logo.png" alt="WebKalcer" width="280" />
+</p>
+
 # WebKalcer
 
 **WebKalcer** adalah platform pembuatan website dan hosting statis gratis untuk UMKM & kreator di Indonesia. Pengguna bisa memesan **Landing Page Statis** (mulai Rp450.000) atau berdiskusi untuk **Website Custom**, serta men-deploy situs statis mereka sendiri (upload ZIP atau hubungkan repository GitHub) ke subdomain `*.webkalcer.com` — gratis, dengan SSL otomatis dan auto-deploy setiap push.
