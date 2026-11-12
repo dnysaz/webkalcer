@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   publisher: "WebKalcer",
   category: "technology",
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
   },
