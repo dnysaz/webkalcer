@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+import "@fortawesome/fontawesome-free/css/solid.min.css";
+import "@fortawesome/fontawesome-free/css/brands.min.css";
 import FloatingWhatsApp from "@/components/floating-wa";
 import { pageSocial, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
@@ -77,6 +79,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         className="flex min-h-full flex-col font-sans text-lg text-ink"
         suppressHydrationWarning
       >
+        {/* React 19 mengangkat <link> ini ke <head>. Menghemat DNS+TLS
+            handshake saat request API pertama (api.webkalcer.com). */}
+        <link rel="preconnect" href="https://api.webkalcer.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.webkalcer.com" />
         {children}
         <FloatingWhatsApp />
       </body>

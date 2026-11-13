@@ -284,6 +284,13 @@ map \$http_x_forwarded_proto \$wk_forwarded_proto {
 	http    http;
 }
 
+# Hanya request WebSocket yang memakai "Connection: upgrade". Untuk request
+# biasa header ini dikosongkan agar keepalive ke upstream tetap aktif.
+map \$http_upgrade \$wk_connection_upgrade {
+	default upgrade;
+	''      '';
+}
+
 # Upstream layanan
 upstream webkalcer_backend {
 	server 127.0.0.1:${BACKEND_PORT};
@@ -352,7 +359,7 @@ server {
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		proxy_set_header Upgrade \$http_upgrade;
-		proxy_set_header Connection "upgrade";
+		proxy_set_header Connection \$wk_connection_upgrade;
 	}
 }
 
@@ -375,7 +382,7 @@ server {
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		proxy_set_header Upgrade \$http_upgrade;
-		proxy_set_header Connection "upgrade";
+		proxy_set_header Connection \$wk_connection_upgrade;
 		proxy_read_timeout 120s;
 		client_max_body_size 105m;
 	}
@@ -398,7 +405,7 @@ server {
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
 		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		proxy_set_header Upgrade \$http_upgrade;
-		proxy_set_header Connection "upgrade";
+		proxy_set_header Connection \$wk_connection_upgrade;
 		proxy_read_timeout 120s;
 		client_max_body_size 105m;
 	}

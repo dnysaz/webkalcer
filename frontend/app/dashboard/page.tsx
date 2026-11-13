@@ -77,8 +77,10 @@ export default function DashboardPage() {
     }
   }, [authLoading, user, router]);
 
+  // Ambil daftar project langsung (paralel dengan pengecekan sesi di
+  // AuthProvider). Sebelumnya request menunggu /api/auth/me selesai sehingga
+  // dashboard butuh 2x round-trip ke server.
   useEffect(() => {
-    if (!user) return;
     let cancelled = false;
     listProjects()
       .then((rows) => {
@@ -93,7 +95,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Yakin ingin menghapus project ini?")) return;
