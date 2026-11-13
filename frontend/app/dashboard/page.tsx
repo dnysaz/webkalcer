@@ -125,6 +125,24 @@ export default function DashboardPage() {
     }
   };
 
+  // Auto-refresh selama ada project pending/building: polling tiap 3 detik
+  // sampai semua selesai (selesai -> berhenti sendiri).
+  const busy = projects.some(
+    (p) => p.status === "pending" || p.status === "building",
+  );
+
+  useEffect(() => {
+    if (!busy) return;
+    const t = setInterval(() => {
+      listProjects()
+        .then((rows) => setProjects(rows))
+        .catch(() => {
+          // abaikan error sementara; polling berhenti saat status selesai
+        });
+    }, 3000);
+    return () => clearInterval(t);
+  }, [busy]);
+
   const online = projects.filter((p) => p.status === "deployed").length;
   const totalViews = projects.reduce((sum, p) => sum + p.views, 0);
 
@@ -217,9 +235,20 @@ export default function DashboardPage() {
               Website yang Anda kelola
             </h2>
           </div>
-          <span className="rounded-full border border-line bg-white px-4 py-1.5 text-sm text-mute">
-            {projects.length} project
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            {busy && (
+              <span className="inline-flex items-center gap-2 rounded-full bg-orange/10 px-4 py-1.5 text-sm font-medium text-orange">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange" />
+                </span>
+                Build berjalan — update otomatis
+              </span>
+            )}
+            <span className="rounded-full border border-line bg-white px-4 py-1.5 text-sm text-mute">
+              {projects.length} project
+            </span>
+          </div>
         </div>
 
         {projects.length === 0 ? (
