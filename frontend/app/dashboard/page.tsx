@@ -11,6 +11,7 @@ import {
   StatCard,
 } from "@/components/dashboard/ui";
 import { DashboardIllustration } from "@/components/ilustrasi";
+import { ConfirmDialog, InfoDialog } from "@/components/dashboard/confirm";
 import {
   listProjects,
   type Project,
@@ -68,6 +69,12 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+    tone: "danger" | "info" | "success";
+  } | null>(null);
 
   // Redirect ke login jika sesi tidak ada
   useEffect(() => {
@@ -99,13 +106,20 @@ export default function DashboardPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Yakin ingin menghapus project ini?")) return;
     setDeleting(id);
     try {
       await deleteProject(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
+      setConfirmDelete(null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal menghapus project.");
+      setNotice({
+        title: "Gagal menghapus project",
+        message:
+          e instanceof Error
+            ? e.message
+            : "Project tidak dapat dihapus. Coba lagi.",
+        tone: "danger",
+      });
     } finally {
       setDeleting(null);
     }
@@ -305,7 +319,7 @@ export default function DashboardPage() {
                     <button
                       type="button"
                       disabled={deleting === p.id}
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => setConfirmDelete(p.id)}
                       className="btn rounded-full border border-line px-4 py-2.5 text-sm font-medium text-red hover:bg-red/5 disabled:opacity-50"
                     >
                       Hapus
@@ -371,6 +385,23 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        tone="danger"
+        title="Hapus project"
+        message="Yakin ingin menghapus project ini? Tindakan ini tidak dapat diurungkan."
+        confirmLabel="Hapus project"
+        busy={deleting !== null}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
+        onCancel={() => setConfirmDelete(null)}
+      />
+      <InfoDialog
+        open={notice !== null}
+        tone={notice?.tone ?? "info"}
+        title={notice?.title ?? "Pemberitahuan"}
+        message={notice?.message ?? ""}
+        onClose={() => setNotice(null)}
+      />
     </div>
   );
 }

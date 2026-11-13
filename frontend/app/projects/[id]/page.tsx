@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/dashboard/auth-provider";
+import { ConfirmDialog, InfoDialog, type ModalTone } from "@/components/dashboard/confirm";
 
 export const dynamic = "force-dynamic";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -62,6 +63,37 @@ export default function ProjectDetailPage() {
   const [domain, setDomain] = useState("");
   const [domainLoading, setDomainLoading] = useState(false);
   const [webhook, setWebhook] = useState<WebhookInfo | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    tone: ModalTone;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    action: () => Promise<void>;
+  } | null>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [notice, setNotice] = useState<{
+    title: string;
+    message: string;
+    tone: ModalTone;
+  } | null>(null);
+
+  const showError = (title: string, e: unknown, fallback: string) =>
+    setNotice({
+      title,
+      message: e instanceof Error ? e.message : fallback,
+      tone: "danger",
+    });
+
+  const runConfirmed = async () => {
+    if (!confirmState) return;
+    setConfirmBusy(true);
+    try {
+      await confirmState.action();
+      setConfirmState(null);
+    } finally {
+      setConfirmBusy(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -125,36 +157,50 @@ export default function ProjectDetailPage() {
       const p = await getProject(params.id!);
       setProject(p);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal memulai redeploy.");
+      showError("Gagal memulai redeploy", e, "Redeploy tidak dapat dimulai. Coba lagi.");
     } finally {
       setDeployLoading(false);
     }
   };
 
-  const handleRollback = async (deploymentId: string, release: string) => {
-    if (
-      !window.confirm(`Rollback ke rilis "${release}"? Situs akan kembali ke versi ini.`)
-    ) return;
-    try {
-      await rollback(params.id!, deploymentId);
-      const p = await getProject(params.id!);
-      setProject(p);
-      const ds = await listDeployments(params.id!);
-      setDeployments(ds);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal rollback.");
-    }
-  };
+  const requestRollback = (deploymentId: string, release: string) =>
+    setConfirmState({
+      tone: "warning",
+      title: "Rollback ke rilis lama",
+      message: `Rollback ke rilis "${release}"? Situs akan kembali ke versi ini.`,
+      confirmLabel: "Rollback",
+      action: async () => {
+        try {
+          await rollback(params.id!, deploymentId);
+          const p = await getProject(params.id!);
+          setProject(p);
+          const ds = await listDeployments(params.id!);
+          setDeployments(ds);
+        } catch (e) {
+          showError("Gagal rollback", e, "Rollback tidak dapat dilakukan. Coba lagi.");
+        }
+      },
+    });
 
-  const handleClear = async () => {
-    if (!window.confirm("Hapus semua riwayat deployment?")) return;
-    try {
-      await clearDeployments(params.id!);
-      setDeployments([]);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal membersihkan riwayat.");
-    }
-  };
+  const requestClear = () =>
+    setConfirmState({
+      tone: "danger",
+      title: "Hapus riwayat deployment",
+      message: "Hapus semua riwayat deployment? Tindakan ini tidak dapat diurungkan.",
+      confirmLabel: "Hapus riwayat",
+      action: async () => {
+        try {
+          await clearDeployments(params.id!);
+          setDeployments([]);
+        } catch (e) {
+          showError(
+            "Gagal membersihkan riwayat",
+            e,
+            "Riwayat deployment tidak dapat dihapus. Coba lagi.",
+          );
+        }
+      },
+    });
 
   const handleSaveEnv = async (envVars: Record<string, string>) => {
     setEnvLoading(true);
@@ -163,7 +209,7 @@ export default function ProjectDetailPage() {
       setEnvKeys(keys);
       setTab("env");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal menyimpan env.");
+      showError("Gagal menyimpan env", e, "Environment variables tidak dapat disimpan. Coba lagi.");
     } finally {
       setEnvLoading(false);
     }
@@ -176,7 +222,7 @@ export default function ProjectDetailPage() {
       setProject((p) => (p ? { ...p, custom_domain: res.custom_domain } : p));
       setDomain(value);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Gagal mengatur domain.");
+      showError("Gagal mengatur domain", e, "Domain tidak dapat disimpan. Coba lagi.");
     } finally {
       setDomainLoading(false);
     }
@@ -249,13 +295,15 @@ export default function ProjectDetailPage() {
             >
               {project.status === "building" ? "Sedang build…" : "Redeploy"}
             </button>
-            <button
-              type="button"
-              onClick={() => window.location.assign(publicUrl)}
-              className="btn rounded-full bg-blue px-6 py-2.5 text-sm font-medium text-white"
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn inline-flex items-center gap-2 rounded-full bg-blue px-6 py-2.5 text-sm font-medium text-white"
             >
               Buka situs
-            </button>
+              <i className="fa-solid fa-arrow-up-right-from-square text-xs" aria-hidden="true" />
+            </a>
           </>
         }
       />
@@ -384,7 +432,7 @@ export default function ProjectDetailPage() {
               {deployments.length > 0 && (
                 <button
                   type="button"
-                  onClick={handleClear}
+                  onClick={requestClear}
                   className="btn rounded-full px-4 py-2 text-sm font-medium text-red hover:bg-red/5"
                 >
                   Bersihkan riwayat
@@ -419,7 +467,7 @@ export default function ProjectDetailPage() {
                     {d.status === "success" && d.release && (
                       <button
                         type="button"
-                        onClick={() => handleRollback(d.id, d.release)}
+                        onClick={() => requestRollback(d.id, d.release)}
                         className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-soft text-mute hover:bg-line"
                         title="Rollback"
                         aria-label="Rollback ke rilis ini"
@@ -637,22 +685,49 @@ export default function ProjectDetailPage() {
         </Link>
         <button
           type="button"
-          onClick={() => {
-            if (
-              window.confirm(
+          onClick={() =>
+            setConfirmState({
+              tone: "danger",
+              title: "Hapus project",
+              message:
                 "Yakin ingin menghapus project ini? Tindakan ini tidak dapat diurungkan.",
-              )
-            ) {
-              deleteProject(params.id!).then(() => {
-                router.push("/dashboard");
-              });
-            }
-          }}
+              confirmLabel: "Hapus project",
+              action: async () => {
+                try {
+                  await deleteProject(params.id!);
+                  router.push("/dashboard");
+                } catch (e) {
+                  showError(
+                    "Gagal menghapus project",
+                    e,
+                    "Project tidak dapat dihapus. Coba lagi.",
+                  );
+                }
+              },
+            })
+          }
           className="btn text-base font-medium text-red hover:bg-red/5"
         >
           Hapus project
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmState !== null}
+        tone={confirmState?.tone ?? "danger"}
+        title={confirmState?.title ?? "Konfirmasi"}
+        message={confirmState?.message ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+        busy={confirmBusy}
+        onConfirm={runConfirmed}
+        onCancel={() => setConfirmState(null)}
+      />
+      <InfoDialog
+        open={notice !== null}
+        tone={notice?.tone ?? "info"}
+        title={notice?.title ?? "Pemberitahuan"}
+        message={notice?.message ?? ""}
+        onClose={() => setNotice(null)}
+      />
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function EnvEditor({
                 next[i] = { ...next[i], key: e.target.value.toUpperCase() };
                 onChange(next);
               }}
-              className={`w-full rounded-2xl border px-4 py-2 font-mono text-base outline-none sm:w-2/5 ${
+              className={`w-full rounded-2xl border px-4 py-2 font-mono text-base outline-none sm:flex-1 ${
                 row.key && !validKey(row.key)
                   ? "border-red"
                   : "border-line focus:border-blue"
@@ -39,7 +39,7 @@ export function EnvEditor({
                 next[i] = { ...next[i], value: e.target.value };
                 onChange(next);
               }}
-              className="w-full rounded-2xl border border-line px-4 py-2 font-mono text-base outline-none focus:border-blue"
+              className="w-full rounded-2xl border border-line px-4 py-2 font-mono text-base outline-none focus:border-blue sm:flex-1"
             />
             <button
               type="button"
