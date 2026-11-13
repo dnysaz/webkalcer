@@ -51,17 +51,17 @@ type CloudflareConfig struct {
 	Target string `env:"CLOUDFLARE_TARGET"`
 }
 
-// EmailConfig mengatur pengiriman email transaksional lewat Sender.net.
+// EmailConfig mengatur pengiriman email transaksional lewat Resend.
 // Semua nilai rahasia hanya dibaca di server; API key tidak pernah dikirim
 // ke browser.
 type EmailConfig struct {
-	// SenderAPIKey adalah token API Sender (Bearer token).
-	SenderAPIKey string `env:"SENDER_API_KEY"`
+	// ResendAPIKey adalah API key Resend (Bearer token).
+	ResendAPIKey string `env:"RESEND_API_KEY"`
 	// ToEmail adalah alamat tujuan notifikasi pesanan.
 	ToEmail string `env:"EMAIL_TO"`
 	// ToName adalah nama penerima pada header email.
 	ToName string `env:"EMAIL_TO_NAME" default:"Tim WebKalcer"`
-	// FromEmail harus alamat/domain yang sudah diverifikasi di Sender.
+	// FromEmail harus alamat dari domain yang sudah diverifikasi di Resend.
 	FromEmail string `env:"EMAIL_FROM" default:"no-reply@webkalcer.com"`
 	FromName  string `env:"EMAIL_FROM_NAME" default:"WebKalcer"`
 }
@@ -108,7 +108,7 @@ func Load() (*Config, error) {
 			TimeoutSeconds: getEnvInt("BUILD_TIMEOUT_SECONDS", 600),
 		},
 		Email: EmailConfig{
-			SenderAPIKey: os.Getenv("SENDER_API_KEY"),
+			ResendAPIKey: os.Getenv("RESEND_API_KEY"),
 			ToEmail:      strings.TrimSpace(os.Getenv("EMAIL_TO")),
 			ToName:       getEnv("EMAIL_TO_NAME", "Tim WebKalcer"),
 			FromEmail:    getEnv("EMAIL_FROM", "no-reply@webkalcer.com"),

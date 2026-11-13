@@ -15,14 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type fakeEmailSender struct {
+type fakeEmailClient struct {
 	msg    email.Message
 	err    error
 	calls  int
 	lastID string
 }
 
-func (f *fakeEmailSender) Send(_ context.Context, msg email.Message) (string, error) {
+func (f *fakeEmailClient) Send(_ context.Context, msg email.Message) (string, error) {
 	f.calls++
 	f.msg = msg
 	if f.err != nil {
@@ -31,15 +31,15 @@ func (f *fakeEmailSender) Send(_ context.Context, msg email.Message) (string, er
 	return "email-id-1", nil
 }
 
-func newTestOrderHandler(t *testing.T, apiKey string, sender EmailSender) *OrderHandler {
+func newTestOrderHandler(t *testing.T, apiKey string, client EmailClient) *OrderHandler {
 	t.Helper()
 	h := NewOrderHandler(config.EmailConfig{
-		SenderAPIKey: apiKey,
+		ResendAPIKey: apiKey,
 		ToEmail:      "owner@webkalcer.com",
 		ToName:       "Tim WebKalcer",
 		FromEmail:    "no-reply@webkalcer.com",
 		FromName:     "WebKalcer",
-	}, sender)
+	}, client)
 	h.now = func() time.Time {
 		return time.Date(2026, 11, 12, 12, 34, 0, 0, time.UTC)
 	}
@@ -58,8 +58,8 @@ func postOrder(t *testing.T, h *OrderHandler, body string) *httptest.ResponseRec
 }
 
 func TestCreateOrderSendsEveryField(t *testing.T) {
-	sender := &fakeEmailSender{}
-	h := newTestOrderHandler(t, "sender-key", sender)
+	client := &fakeEmailClient{}
+	h := newTestOrderHandler(t, "client-key", client)
 
 	rec := postOrder(t, h, `{
 		"nama": "Budi & <Sari>",
@@ -72,11 +72,11 @@ func TestCreateOrderSendsEveryField(t *testing.T) {
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("status = %d, ingin 201: %s", rec.Code, rec.Body.String())
 	}
-	if sender.calls != 1 {
-		t.Fatalf("sender dipanggil %d kali, ingin 1", sender.calls)
+	if client.calls != 1 {
+		t.Fatalf("client dipanggil %d kali, ingin 1", client.calls)
 	}
 
-	msg := sender.msg
+	msg := client.msg
 	if msg.ToEmail != "owner@webkalcer.com" || msg.FromEmail != "no-reply@webkalcer.com" {
 		t.Errorf("from/to = %q/%q", msg.FromEmail, msg.ToEmail)
 	}
@@ -129,8 +129,8 @@ func TestCreateOrderValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			sender := &fakeEmailSender{}
-			h := newTestOrderHandler(t, "sender-key", sender)
+			client := &fakeEmailClient{}
+			h := newTestOrderHandler(t, "client-key", client)
 
 			rec := postOrder(t, h, tc.body)
 
@@ -140,30 +140,30 @@ func TestCreateOrderValidation(t *testing.T) {
 			if !strings.Contains(rec.Body.String(), tc.want) {
 				t.Errorf("body = %s, ingin memuat %q", rec.Body.String(), tc.want)
 			}
-			if sender.calls != 0 {
-				t.Errorf("sender dipanggil %d kali untuk input tidak valid", sender.calls)
+			if client.calls != 0 {
+				t.Errorf("client dipanggil %d kali untuk input tidak valid", client.calls)
 			}
 		})
 	}
 }
 
 func TestCreateOrderRequiresEmailConfiguration(t *testing.T) {
-	sender := &fakeEmailSender{}
-	h := newTestOrderHandler(t, "", sender)
+	client := &fakeEmailClient{}
+	h := newTestOrderHandler(t, "", client)
 
 	rec := postOrder(t, h, `{"nama":"Budi","kontak":"0812","pesan":"cukup panjang","paket":"landing-page"}`)
 
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("status = %d, ingin 503: %s", rec.Code, rec.Body.String())
 	}
-	if sender.calls != 0 {
-		t.Errorf("sender tidak boleh dipanggil saat belum dikonfigurasi")
+	if client.calls != 0 {
+		t.Errorf("client tidak boleh dipanggil saat belum dikonfigurasi")
 	}
 }
 
-func TestCreateOrderReportsSenderFailure(t *testing.T) {
-	sender := &fakeEmailSender{err: errors.New("sender down")}
-	h := newTestOrderHandler(t, "sender-key", sender)
+func TestCreateOrderReportsEmailFailure(t *testing.T) {
+	client := &fakeEmailClient{err: errors.New("client down")}
+	h := newTestOrderHandler(t, "client-key", client)
 
 	rec := postOrder(t, h, `{"nama":"Budi","kontak":"0812","pesan":"cukup panjang","paket":"landing-page"}`)
 

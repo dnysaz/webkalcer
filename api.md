@@ -58,7 +58,7 @@ Backend hanya menerima origin dari env `CORS_ORIGINS` (default: `http://localhos
 | GET | `/auth/google/login` | Mulai login Google OAuth |
 | GET | `/auth/google/callback` | Callback OAuth |
 | GET | `/auth/providers` | Cek provider OAuth yang sudah dikonfigurasi |
-| POST | `/api/orders` | Kirim formulir pesanan publik ke email via Sender |
+| POST | `/api/orders` | Kirim formulir pesanan publik ke email via Resend |
 
 ### Butuh login (`/api/*`)
 
@@ -110,7 +110,7 @@ Status yang sering muncul:
 | 409 | Konflik (subdomain/as repo/domain sudah dipakai) |
 | 429 | Rate limit |
 | 500 | Error server |
-| 502 | Gagal menghubungi layanan eksternal (GitHub / Sender) |
+| 502 | Gagal menghubungi layanan eksternal (GitHub / Resend) |
 | 503 | Build worker tidak siap, atau layanan email pesanan belum dikonfigurasi |
 
 Catatan: endpoint `/api/*` yang tidak ada akan dijawab `404 {"error":"endpoint not found"}`.
@@ -260,7 +260,7 @@ Response: `202` bila deploy dimulai, `200` untuk ping/event lain, `401` signatur
 ### `POST /api/orders`
 
 Formulir pesanan publik dari halaman `/pesan-dan-diskusi` ("Mulai Pesanan").
-Tanpa login; backend mengirim data ke `EMAIL_TO` lewat **Sender.net**.
+Tanpa login; backend mengirim data ke `EMAIL_TO` lewat **Resend**.
 Rate limit **5/menit** per IP.
 
 Request body:
@@ -297,21 +297,21 @@ Error:
 |---|---|
 | 400 | Validasi gagal / JSON rusak (pesan dalam bahasa Indonesia) |
 | 429 | Rate limit; coba lagi setelah 1 menit |
-| 502 | Sender menolak / tidak dapat dihubungi |
-| 503 | `SENDER_API_KEY` atau `EMAIL_TO` belum diisi di `backend/.env` |
+| 502 | Resend menolak / tidak dapat dihubungi |
+| 503 | `RESEND_API_KEY` atau `EMAIL_TO` belum diisi di `backend/.env` |
 
 Konfigurasi backend:
 
 | Env | Keterangan |
 |---|---|
-| `SENDER_API_KEY` | API token Sender (Bearer). Hanya di server. |
+| `RESEND_API_KEY` | API key Resend (Bearer). Hanya di server. |
 | `EMAIL_TO` | Alamat email penerima notifikasi pesanan. |
 | `EMAIL_TO_NAME` | Nama penerima (default `Tim WebKalcer`). |
-| `EMAIL_FROM` | Alamat pengirim yang **sudah diverifikasi** di Sender. |
+| `EMAIL_FROM` | Alamat pengirim dari domain yang **sudah diverifikasi** di Resend. |
 | `EMAIL_FROM_NAME` | Nama pengirim (default `WebKalcer`). |
 
-> API key Sender tidak pernah dikirim ke browser. Frontend hanya memanggil
-> `/api/orders` tanpa kredensial Sender.
+> API key Resend tidak pernah dikirim ke browser. Frontend hanya memanggil
+> `/api/orders` tanpa kredensial Resend.
 
 ---
 

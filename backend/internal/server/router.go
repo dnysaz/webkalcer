@@ -72,7 +72,7 @@ func NewRouter(cfg *config.Config, db *database.Database, worker *builder.Worker
 	// server SSR saat project deleted (instance sama dengan signal handler).
 	projectHandler := handler.NewProjectHandler(projectStore, userStore, sessionStore, stores.Deployment, worker, dns.New(cfg.Cloudflare), pm, cfg.Build.SitesDir, cfg.Server.FrontendURL)
 	githubHandler := handler.NewGitHubHandler(sessionStore, userStore)
-	orderHandler := handler.NewOrderHandler(cfg.Email, email.NewSender(cfg.Email.SenderAPIKey))
+	orderHandler := handler.NewOrderHandler(cfg.Email, email.NewClient(cfg.Email.ResendAPIKey))
 
 	// Logging utama: durasi request, status, error count.
 	r.Use(RequestLogger())

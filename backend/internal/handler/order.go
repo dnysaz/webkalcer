@@ -16,9 +16,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// EmailSender adalah bagian klien email yang dipakai handler pesanan.
-// Dibuat sebagai interface agar handler bisa diuji tanpa memanggil Sender.
-type EmailSender interface {
+// EmailClient adalah bagian klien email yang dipakai handler pesanan.
+// Dibuat sebagai interface agar handler bisa diuji tanpa memanggil Resend.
+type EmailClient interface {
 	Send(ctx context.Context, msg email.Message) (string, error)
 }
 
@@ -36,7 +36,7 @@ var paketCatalog = map[string]paketInfo{
 
 // OrderHandler menerima pesanan dari formulir publik dan meneruskannya ke email.
 type OrderHandler struct {
-	sender     EmailSender
+	client     EmailClient
 	toEmail    string
 	toName     string
 	fromEmail  string
@@ -47,14 +47,14 @@ type OrderHandler struct {
 }
 
 // NewOrderHandler membuat handler pesanan publik.
-func NewOrderHandler(cfg config.EmailConfig, sender EmailSender) *OrderHandler {
+func NewOrderHandler(cfg config.EmailConfig, client EmailClient) *OrderHandler {
 	return &OrderHandler{
-		sender:     sender,
+		client:     client,
 		toEmail:    strings.TrimSpace(cfg.ToEmail),
 		toName:     strings.TrimSpace(cfg.ToName),
 		fromEmail:  strings.TrimSpace(cfg.FromEmail),
 		fromName:   strings.TrimSpace(cfg.FromName),
-		configured: strings.TrimSpace(cfg.SenderAPIKey) != "" && strings.TrimSpace(cfg.ToEmail) != "",
+		configured: strings.TrimSpace(cfg.ResendAPIKey) != "" && strings.TrimSpace(cfg.ToEmail) != "",
 		now:        time.Now,
 	}
 }
@@ -109,7 +109,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Second)
 	defer cancel()
 
-	emailID, err := h.sender.Send(ctx, email.Message{
+	emailID, err := h.client.Send(ctx, email.Message{
 		FromName:  h.fromName,
 		FromEmail: h.fromEmail,
 		ToName:    h.toName,
@@ -119,7 +119,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 		HTML:      htmlBody,
 	})
 	if err != nil {
-		// Jangan log isi form (data pribadi); cukup error dari Sender.
+		// Jangan log isi form (data pribadi); cukup error dari Resend.
 		log.Printf("failed to send the order email: %v", err)
 		c.JSON(http.StatusBadGateway, gin.H{
 			"error": "pesanan gagal dikirim. Silakan coba lagi atau hubungi kami lewat WhatsApp.",

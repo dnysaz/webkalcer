@@ -146,7 +146,7 @@ export type OrderInput = {
 
 /**
  * Kirim formulir pesanan publik. Backend meneruskannya ke email tim lewat
- * Sender; API key tidak pernah menyentuh browser.
+ * Resend; API key tidak pernah menyentuh browser.
  */
 export async function sendOrder(input: OrderInput): Promise<void> {
   await api("/api/orders", { method: "POST", json: input });

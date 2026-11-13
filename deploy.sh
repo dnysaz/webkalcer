@@ -421,7 +421,7 @@ log "Selesai. Status service:"
 systemctl --no-pager status webkalcer-backend webkalcer-frontend nginx | grep -E "Active:|●" | head -20
 echo
 log "Langkah berikutnya:"
-echo "  1. Edit $BACKEND_DIR/.env dan isi kredensial (GitHub/Google/Cloudflare/Sender)."
+echo "  1. Edit $BACKEND_DIR/.env dan isi kredensial (GitHub/Google/Cloudflare/Resend)."
 echo "  2. sudo systemctl restart webkalcer-backend"
 echo "  3. Mode TLS origin: $SSL_MODE"
 echo "     Cloudflare SSL/TLS: FULL (strict) bila origin TLS aktif, FLEXIBLE bila tidak."

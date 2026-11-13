@@ -8,7 +8,7 @@
 
 ## Fitur Utama
 
-- **Pemesanan publik** (`/pesan-dan-diskusi`) — formulir "Mulai Pesanan" yang mengirim seluruh data ke email tim lewat **Sender.net** (API key hanya di server).
+- **Pemesanan publik** (`/pesan-dan-diskusi`) — formulir "Mulai Pesanan" yang mengirim seluruh data ke email tim lewat **Resend** (API key hanya di server).
 - **Autentikasi OAuth** — GitHub & Google (session cookie httpOnly, SameSite=Lax, 24 jam).
 - **Dashboard** — kelola project, env vars, domain kustom, riwayat deployment, rollback, webhook GitHub.
 - **Deploy** — dari repository GitHub (auto deploy via webhook push) atau upload ZIP (proteksi path traversal & zip bomb).
@@ -27,7 +27,7 @@ webkalcer/
 │   │   ├── config/          # Loader .env (Server, DB, OAuth, Cloudflare, Email, Build)
 │   │   ├── database/        # SQLite + store (user, session, project, deployment)
 │   │   ├── dns/             # Klien Cloudflare (record & custom hostname)
-│   │   ├── email/           # Klien Sender.net (email transaksional)
+│   │   ├── email/           # Klien Resend (email transaksional)
 │   │   ├── handler/         # HTTP handlers (auth, project, github, order, webhook, upload, domain)
 │   │   ├── id/              # Generator ID (UUID v7)
 │   │   ├── secure/          # AES-256-GCM + hashing session
@@ -54,7 +54,7 @@ webkalcer/
 
 ## Teknologi
 
-- **Backend:** Go 1.2x, Gin, SQLite (sqlx), OAuth2 (GitHub/Google), Cloudflare DNS, Sender.net.
+- **Backend:** Go 1.2x, Gin, SQLite (sqlx), OAuth2 (GitHub/Google), Cloudflare DNS, Resend.
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, React.
 - **Infra:** nginx (reverse proxy), systemd, Cloudflare (DNS/SSL/proxy).
 
@@ -89,7 +89,7 @@ Dev server backend: `http://localhost:8080` · Frontend: `http://localhost:3000`
 | `GITHUB_CLIENT_ID/SECRET` | backend/.env | OAuth GitHub |
 | `GOOGLE_CLIENT_ID/SECRET` | backend/.env | OAuth Google (opsional) |
 | `CLOUDFLARE_*` | backend/.env | DNS otomatis (opsional) |
-| `SENDER_API_KEY`, `EMAIL_TO`, `EMAIL_FROM` | backend/.env | Email formulir pesanan via Sender |
+| `RESEND_API_KEY`, `EMAIL_TO`, `EMAIL_FROM` | backend/.env | Email formulir pesanan via Resend |
 | `NEXT_PUBLIC_API_URL` | frontend/.env.local | URL backend |
 | `NEXT_PUBLIC_PLATFORM_DOMAIN` | frontend/.env.local | Domain platform (`webkalcer.com`) |
 

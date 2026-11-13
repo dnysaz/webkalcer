@@ -92,7 +92,7 @@ Rekomendasi (belum diterapkan): tambahkan `--` sebelum `cloneURL` pada perintah 
 
 ## 10. Rahasia & Konfigurasi — AMAN (dengan catatan)
 
-- API key Sender, OAuth secret, Cloudflare token hanya di backend `.env`; tidak pernah dikirim ke browser (tidak ada `NEXT_PUBLIC_*`).
+- API key Resend, OAuth secret, Cloudflare token hanya di backend `.env`; tidak pernah dikirim ke browser (tidak ada `NEXT_PUBLIC_*`).
 - Token GitHub disimpan terenkripsi (AES-256-GCM) di DB; session ID di-hash (SHA-256) sebelum disimpan.
 - `.env` (backend & frontend) tidak ter-track git (dicek: `git ls-files` tidak memuatnya).
 - `SESSION_SECRET` sudah digenerate; rotasi membuat semua session lama invalid (by design).
@@ -112,7 +112,7 @@ WebKalcer adalah platform deploy: ia **menjalankan kode pengguna** (build `npm i
 - Tidak ada penyimpanan token di `localStorage`/`sessionStorage`; session hanya cookie HttpOnly.
 - `credentials: "include"` pada fetch (cookie session).
 - CORS backend membatasi origin ke `CORS_ORIGINS` dengan `AllowCredentials: true`. Origin yang tidak terdaftar ditolak.
-- Form pesanan mengirim ke `/api/orders` tanpa kredensial Sender (API key tidak pernah ke browser). Diverifikasi.
+- Form pesanan mengirim ke `/api/orders` tanpa kredensial Resend (API key tidak pernah ke browser). Diverifikasi.
 
 ## 13. Temuan Kecil / Hardening Tambahan
 

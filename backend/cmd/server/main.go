@@ -56,11 +56,11 @@ func main() {
 	worker := builder.NewWorker(buildEngine, stores.Project, stores.Deployment, dnsClient)
 	worker.Start(*workers)
 
-	// Email transaksional (formulir pesanan) lewat Sender.net.
-	if cfg.Email.SenderAPIKey == "" || cfg.Email.ToEmail == "" {
-		log.Printf("email pesanan tidak aktif: set SENDER_API_KEY dan EMAIL_TO di .env untuk mengaktifkan pengiriman formulir pesanan")
+	// Email transaksional (formulir pesanan) lewat Resend.
+	if cfg.Email.ResendAPIKey == "" || cfg.Email.ToEmail == "" {
+		log.Printf("email pesanan tidak aktif: set RESEND_API_KEY dan EMAIL_TO di .env untuk mengaktifkan pengiriman formulir pesanan")
 	} else {
-		log.Printf("email pesanan aktif via Sender (from=%s, to=%s)", cfg.Email.FromEmail, cfg.Email.ToEmail)
+		log.Printf("email pesanan aktif via Resend (from=%s, to=%s)", cfg.Email.FromEmail, cfg.Email.ToEmail)
 	}
 
 	// Buat dan jalankan HTTP server
