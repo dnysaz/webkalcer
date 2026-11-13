@@ -553,7 +553,7 @@ export default function ProjectDetailPage() {
                 value={newEnvValue}
                 placeholder="nilai"
                 onChange={(e) => setNewEnvValue(e.target.value)}
-                className="w-full rounded-xl border border-line px-3 py-2 font-mono text-base outline-none focus:border-blue sm:w-64"
+                className="w-full min-w-0 flex-1 rounded-xl border border-line px-3 py-2 font-mono text-base outline-none focus:border-blue"
               />
               <button
                 type="button"
