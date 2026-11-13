@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import LandingNavbar from "@/components/landing/navbar";
 import Footer from "@/components/landing/footer";
+import BrandIcon from "@/components/brand-icon";
 
 export type LegalSection = {
   id: string;
@@ -117,10 +118,7 @@ export default function LegalDoc({
                     rel="noreferrer"
                     className="btn inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-base font-medium text-white"
                   >
-                    <i
-                      className="fa-brands fa-whatsapp text-xl text-[#25D366]"
-                      aria-hidden="true"
-                    />
+                    <BrandIcon name="whatsapp" className="text-xl text-[#25D366]" />
                     WhatsApp 0858-0556-6344
                   </a>
                   <a

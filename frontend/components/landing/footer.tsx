@@ -1,6 +1,7 @@
 "use client";
 
 import SiteLogo from "@/components/site-logo";
+import BrandIcon from "@/components/brand-icon";
 
 function FooterHeading({ children }: { children: string }) {
   return (
@@ -105,7 +106,7 @@ export default function Footer() {
                 className="grid h-10 w-10 place-items-center rounded-full bg-white border border-line text-ink hover:bg-blue hover:text-white transition-all"
                 aria-label="Instagram"
               >
-                <i className="fa-brands fa-instagram fa-lg" aria-hidden="true" />
+                <BrandIcon name="instagram" className="text-xl" />
               </a>
               <a
                 href="https://twitter.com/webkalcer"
@@ -114,7 +115,7 @@ export default function Footer() {
                 className="grid h-10 w-10 place-items-center rounded-full bg-white border border-line text-ink hover:bg-blue hover:text-white transition-all"
                 aria-label="Twitter / X"
               >
-                <i className="fa-brands fa-x-twitter fa-lg" aria-hidden="true" />
+                <BrandIcon name="x" className="text-xl" />
               </a>
               <a
                 href="https://github.com/webkalcer"
@@ -123,7 +124,7 @@ export default function Footer() {
                 className="grid h-10 w-10 place-items-center rounded-full bg-white border border-line text-ink hover:bg-blue hover:text-white transition-all"
                 aria-label="GitHub"
               >
-                <i className="fa-brands fa-github fa-lg" aria-hidden="true" />
+                <BrandIcon name="github" className="text-xl" />
               </a>
               <a
                 href="https://wa.me/6285805566344"
@@ -132,7 +133,7 @@ export default function Footer() {
                 className="grid h-10 w-10 place-items-center rounded-full bg-white border border-line text-ink hover:bg-blue hover:text-white transition-all"
                 aria-label="WhatsApp"
               >
-                <i className="fa-brands fa-whatsapp fa-lg" aria-hidden="true" />
+                <BrandIcon name="whatsapp" className="text-xl" />
               </a>
             </div>
           </div>

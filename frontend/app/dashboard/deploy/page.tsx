@@ -15,14 +15,15 @@ import {
   updateEnv,
   uploadProject,
 } from "@/lib/api";
+import BrandIcon from "@/components/brand-icon";
 
 const SUBDOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 type Tab = "git" | "zip";
 
-const TABS: { key: Tab; label: string; caption: string; icon: string }[] = [
-  { key: "git", label: "GitHub", caption: "Paste link repo", icon: "fa-brands fa-github" },
-  { key: "zip", label: "Upload ZIP", caption: "File .zip, maks 100 MB", icon: "fa-solid fa-file-zipper" },
+const TABS: { key: Tab; label: string; caption: string; brand?: "github" }[] = [
+  { key: "git", label: "GitHub", caption: "Paste link repo", brand: "github" },
+  { key: "zip", label: "Upload ZIP", caption: "File .zip, maks 100 MB" },
 ];
 
 const FLOW_STEPS = [
@@ -311,7 +312,14 @@ export default function DeployPage() {
                     : "text-mute hover:text-ink"
                 }`}
               >
-                <i className={`${t.icon} text-xl sm:text-2xl`} aria-hidden="true" />
+                {t.brand ? (
+                  <BrandIcon name={t.brand} className="text-xl sm:text-2xl" />
+                ) : (
+                  <i
+                    className="fa-solid fa-file-zipper text-xl sm:text-2xl"
+                    aria-hidden="true"
+                  />
+                )}
                 <span className="flex flex-col items-center leading-tight sm:items-start">
                   <span className="font-medium">{t.label}</span>
                   <span className="mt-0.5 hidden text-[11px] font-normal text-mute sm:block">
@@ -518,10 +526,11 @@ export default function DeployPage() {
               <div className="flex items-center justify-between gap-4 py-3">
                 <dt className="text-mute">Metode</dt>
                 <dd className="flex items-center gap-2 font-medium text-ink">
-                  <i
-                    className={tab === "git" ? "fa-brands fa-github" : "fa-solid fa-file-zipper"}
-                    aria-hidden="true"
-                  />
+                  {tab === "git" ? (
+                    <BrandIcon name="github" />
+                  ) : (
+                    <i className="fa-solid fa-file-zipper" aria-hidden="true" />
+                  )}
                   {tab === "git" ? "GitHub" : "Upload ZIP"}
                 </dd>
               </div>

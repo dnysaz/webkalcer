@@ -17,6 +17,7 @@ import {
   deleteProject,
   PLATFORM_DOMAIN,
 } from "@/lib/api";
+import BrandIcon from "@/components/brand-icon";
 
 const FAQ: { icon: string; q: string; a: string }[] = [
   {
@@ -233,10 +234,7 @@ export default function DashboardPage() {
                     rel="noreferrer"
                     className="btn inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-base font-medium text-ink hover:bg-soft"
                   >
-                    <i
-                      className="fa-brands fa-whatsapp text-lg text-[#25D366]"
-                      aria-hidden="true"
-                    />
+                    <BrandIcon name="whatsapp" className="text-lg text-[#25D366]" />
                     Tanya dulu
                   </a>
                 </div>
@@ -272,14 +270,11 @@ export default function DashboardPage() {
 
                 <div className="flex flex-1 flex-col p-5">
                   <p className="flex items-center gap-2 truncate text-sm text-mute">
-                    <i
-                      className={
-                        p.repo_url.startsWith("zip://")
-                          ? "fa-solid fa-file-zipper"
-                          : "fa-brands fa-github"
-                      }
-                      aria-hidden="true"
-                    />
+                    {p.repo_url.startsWith("zip://") ? (
+                      <i className="fa-solid fa-file-zipper" aria-hidden="true" />
+                    ) : (
+                      <BrandIcon name="github" />
+                    )}
                     {p.repo_url.startsWith("zip://")
                       ? "Upload ZIP"
                       : p.repo_url}
@@ -346,10 +341,7 @@ export default function DashboardPage() {
               rel="noreferrer"
               className="btn inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-base font-medium text-white"
             >
-              <i
-                className="fa-brands fa-whatsapp text-xl text-[#25D366]"
-                aria-hidden="true"
-              />
+              <BrandIcon name="whatsapp" className="text-xl text-[#25D366]" />
               Chat tim WebKalcer
             </a>
           </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import LandingNavbar from "@/components/landing/navbar";
 import Footer from "@/components/landing/footer";
 import { pageSocial } from "@/lib/seo";
+import BrandIcon from "@/components/brand-icon";
 
 export const metadata: Metadata = {
   title: "Kontak Kami — WebKalcer",
@@ -66,17 +67,17 @@ const CHANNELS: Channel[] = [
 const SOCIALS = [
   {
     href: "https://instagram.com/webkalcer",
-    icon: "fa-brands fa-instagram",
+    brand: "instagram" as const,
     label: "Instagram",
   },
   {
     href: "https://twitter.com/webkalcer",
-    icon: "fa-brands fa-x-twitter",
+    brand: "x" as const,
     label: "Twitter / X",
   },
   {
     href: "https://github.com/webkalcer",
-    icon: "fa-brands fa-github",
+    brand: "github" as const,
     label: "GitHub",
   },
 ];
@@ -191,10 +192,7 @@ export default function KontakPage() {
           >
             <div className="flex items-start gap-4">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#25D366]/15">
-                <i
-                  className="fa-brands fa-whatsapp text-2xl text-[#25D366]"
-                  aria-hidden="true"
-                />
+                <BrandIcon name="whatsapp" className="text-2xl text-[#25D366]" />
               </span>
               <div>
                 <p className="text-lg font-medium tracking-tight text-ink">
@@ -207,7 +205,7 @@ export default function KontakPage() {
               </div>
             </div>
             <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-base font-medium text-[#075E54] transition-transform group-hover:scale-[1.02]">
-              <i className="fa-brands fa-whatsapp text-lg" aria-hidden="true" />
+              <BrandIcon name="whatsapp" className="text-lg" />
               Chat sekarang
             </span>
           </a>
@@ -238,7 +236,7 @@ export default function KontakPage() {
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-blue/40 hover:bg-blue/5 hover:text-blue"
                   >
-                    <i className={`${s.icon} text-base`} aria-hidden="true" />
+                    <BrandIcon name={s.brand} className="text-base" />
                     {s.label}
                   </a>
                 ))}

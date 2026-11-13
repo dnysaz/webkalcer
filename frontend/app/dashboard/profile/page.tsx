@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/dashboard/auth-provider";
 import { PageHeader, SectionLabel } from "@/components/dashboard/ui";
 import { getGithubProfile, type GithubProfile } from "@/lib/api";
+import BrandIcon from "@/components/brand-icon";
 
 function initials(name: string | undefined) {
   if (!name) return "?";
@@ -140,12 +141,7 @@ export default function ProfilePage() {
             </p>
             <p className="mt-1 break-all text-base text-mute">{user.email}</p>
             <span className="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-1.5 text-sm font-medium text-ink">
-              <i
-                className={
-                  isGithub ? "fa-brands fa-github" : "fa-brands fa-google"
-                }
-                aria-hidden="true"
-              />
+              <BrandIcon name={isGithub ? "github" : "google"} />
               Masuk dengan {provider}
             </span>
           </div>

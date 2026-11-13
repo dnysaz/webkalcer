@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/components/dashboard/auth-provider";
 import { PageHeader, SectionLabel } from "@/components/dashboard/ui";
+import BrandIcon from "@/components/brand-icon";
 
 function CardHeading({
   icon,
@@ -84,12 +85,7 @@ export default function PengaturanPage() {
             <div className="flex flex-wrap items-baseline justify-between gap-2 py-3">
               <span className="text-base text-mute">Masuk via</span>
               <span className="inline-flex items-center gap-2 rounded-full bg-soft px-3 py-1 text-sm font-medium text-ink">
-                <i
-                  className={
-                    isGithub ? "fa-brands fa-github" : "fa-brands fa-google"
-                  }
-                  aria-hidden="true"
-                />
+                <BrandIcon name={isGithub ? "github" : "google"} />
                 {provider}
               </span>
             </div>
@@ -143,10 +139,7 @@ export default function PengaturanPage() {
             rel="noreferrer"
             className="btn mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-6 py-2.5 text-base font-medium text-ink hover:bg-soft"
           >
-            <i
-              className="fa-brands fa-whatsapp text-lg text-[#25D366]"
-              aria-hidden="true"
-            />
+            <BrandIcon name="whatsapp" className="text-lg text-[#25D366]" />
             Minta penghapusan via WhatsApp
           </a>
         </section>

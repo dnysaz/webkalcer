@@ -57,6 +57,7 @@ export default function DashboardNavbar() {
       <div className="wrap flex h-16 items-center justify-between gap-2 sm:h-20">
         <Link
           href="/"
+          prefetch={false}
           className="flex items-center gap-2"
           aria-label="WebKalcer — ke beranda"
           onClick={() => {
@@ -69,7 +70,12 @@ export default function DashboardNavbar() {
 
         <nav className="hidden items-center gap-1 text-base md:flex">
           {MENU.map((item) => (
-            <Link key={item.href} href={item.href} className={menuLink(item.href)}>
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={false}
+              className={menuLink(item.href)}
+            >
               {item.label}
             </Link>
           ))}
@@ -126,6 +132,7 @@ export default function DashboardNavbar() {
                           <Link
                             key={item.href}
                             href={item.href}
+                            prefetch={false}
                             className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-base text-ink transition-colors hover:bg-soft"
                           >
                             <i
@@ -158,6 +165,7 @@ export default function DashboardNavbar() {
           ) : (
             <Link
               href="/login"
+              prefetch={false}
               className="btn rounded-full bg-blue px-5 py-2.5 text-sm font-medium text-white sm:text-base"
             >
               Masuk
@@ -211,6 +219,7 @@ export default function DashboardNavbar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   onClick={() => setNavOpen(false)}
                   className={`flex items-center gap-4 rounded-2xl px-4 py-3.5 text-lg transition-colors hover:bg-soft ${
                     active ? "bg-soft font-medium text-ink" : "text-ink"

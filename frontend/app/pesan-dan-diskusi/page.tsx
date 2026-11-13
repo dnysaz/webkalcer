@@ -4,6 +4,7 @@ import PaketForm from "@/components/pesan/paket-form";
 import { PAKET, type PaketKey } from "@/components/pesan/paket-data";
 import LandingNavbar from "@/components/landing/navbar";
 import Footer from "@/components/landing/footer";
+import BrandIcon from "@/components/brand-icon";
 
 export const metadata: Metadata = {
   title: "Pesan & Diskusi — WebKalcer",
@@ -74,7 +75,7 @@ export default async function PesanDanDiskusiPage({
               rel="noreferrer"
               className="mt-4 inline-flex items-center gap-2 text-base font-medium text-blue hover:underline"
             >
-              <i className="fa-brands fa-whatsapp" aria-hidden="true" />
+              <BrandIcon name="whatsapp" />
               Atau chat langsung: 0858-0556-6344
             </a>
           </div>
