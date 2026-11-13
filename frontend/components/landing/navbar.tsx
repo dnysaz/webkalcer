@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import SiteLogo from "@/components/site-logo";
+import { useAuth } from "@/components/dashboard/auth-provider";
 
 const NAV_LINKS = [
   { href: "/layanan", label: "Layanan" },
@@ -21,6 +22,13 @@ export default function LandingNavbar({
   hideLinks?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { user, loading } = useAuth();
+
+  const cta = loading
+    ? null // skeleton di bawah
+    : user
+      ? { href: "/dashboard", label: "Dashboard" }
+      : { href: "/login", label: "Masuk" };
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur">
@@ -45,14 +53,21 @@ export default function LandingNavbar({
           </nav>
         )}
         <div className="flex items-center gap-2">
-          {!hideCta && (
-            <Link
-              href="/login"
-              className="btn rounded-full bg-blue px-5 py-2 text-base font-medium text-white sm:px-6 sm:py-2.5"
-            >
-              Masuk
-            </Link>
-          )}
+          {!hideCta &&
+            (cta ? (
+              <Link
+                href={cta.href}
+                className="btn rounded-full bg-blue px-5 py-2 text-base font-medium text-white sm:px-6 sm:py-2.5"
+              >
+                {cta.label}
+              </Link>
+            ) : (
+              // Placeholder seukuran tombol — menghindari kilat label yang salah
+              <span
+                aria-hidden="true"
+                className="h-10 w-24 animate-pulse rounded-full bg-soft sm:h-11"
+              />
+            ))}
           {!hideLinks && (
             <button
               type="button"
@@ -84,6 +99,20 @@ export default function LandingNavbar({
                 {link.label}
               </a>
             ))}
+            {cta && (
+              <Link
+                href={cta.href}
+                onClick={() => setOpen(false)}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue px-4 py-3.5 text-lg font-medium text-white"
+              >
+                {cta.label === "Dashboard" ? (
+                  <i className="fa-solid fa-gauge-high" aria-hidden="true" />
+                ) : (
+                  <i className="fa-solid fa-right-to-bracket" aria-hidden="true" />
+                )}
+                {cta.label}
+              </Link>
+            )}
           </nav>
         </div>
       )}

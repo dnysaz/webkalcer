@@ -3,6 +3,7 @@ import { Roboto, Roboto_Mono } from "next/font/google";
 import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
 import "@fortawesome/fontawesome-free/css/solid.min.css";
 import FloatingWhatsApp from "@/components/floating-wa";
+import { AuthProvider } from "@/components/dashboard/auth-provider";
 import { pageSocial, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
@@ -82,7 +83,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             handshake saat request API pertama (api.webkalcer.com). */}
         <link rel="preconnect" href="https://api.webkalcer.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.webkalcer.com" />
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <FloatingWhatsApp />
       </body>
     </html>
