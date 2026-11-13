@@ -124,14 +124,14 @@ export default function LegalDoc({
                     WhatsApp 0858-0556-6344
                   </a>
                   <a
-                    href="mailto:halo@webkalcer.com"
+                    href="mailto:webkalcer@gmail.com"
                     className="btn inline-flex items-center justify-center gap-2 rounded-full border border-line bg-white px-6 py-3 text-base font-medium text-ink hover:bg-white/60"
                   >
                     <i
                       className="fa-regular fa-envelope text-xl text-blue"
                       aria-hidden="true"
                     />
-                    halo@webkalcer.com
+                    webkalcer@gmail.com
                   </a>
                 </div>
               </div>

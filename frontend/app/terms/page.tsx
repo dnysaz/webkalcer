@@ -519,10 +519,10 @@ const sections: LegalSection[] = [
           <li>
             Email:{" "}
             <a
-              href="mailto:halo@webkalcer.com"
+              href="mailto:webkalcer@gmail.com"
               className="text-blue hover:underline"
             >
-              halo@webkalcer.com
+              webkalcer@gmail.com
             </a>
           </li>
           <li>

@@ -298,8 +298,8 @@ const sections: LegalSection[] = [
         </ul>
         <p>
           Untuk menggunakan hak-hak tersebut, hubungi kami di{" "}
-          <a href="mailto:halo@webkalcer.com" className="text-blue hover:underline">
-            halo@webkalcer.com
+          <a href="mailto:webkalcer@gmail.com" className="text-blue hover:underline">
+            webkalcer@gmail.com
           </a>
           . Kami akan merespons dalam waktu paling lambat 30 hari,
           sebagaimana diwajibkan hukum. Kami dapat meminta verifikasi
@@ -375,10 +375,10 @@ const sections: LegalSection[] = [
           <li>
             Email:{" "}
             <a
-              href="mailto:halo@webkalcer.com"
+              href="mailto:webkalcer@gmail.com"
               className="text-blue hover:underline"
             >
-              halo@webkalcer.com
+              webkalcer@gmail.com
             </a>
           </li>
           <li>
