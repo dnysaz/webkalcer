@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/dashboard/auth-provider";
 import { ConfirmDialog, InfoDialog, type ModalTone } from "@/components/dashboard/confirm";
+import { CopyButton } from "@/components/dashboard/copy-button";
 
 export const dynamic = "force-dynamic";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -636,14 +637,7 @@ export default function ProjectDetailPage() {
                       readOnly
                       className="min-w-0 flex-1 rounded-xl border border-line px-3 py-2 font-mono text-xs text-ink outline-none"
                     />
-                    <button
-                      type="button"
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-sm font-medium text-blue hover:bg-line"
-                      title="Salin"
-                      aria-label="Salin"
-                    >
-                      <i className="fa-regular fa-copy" aria-hidden="true" />
-                    </button>
+                    <CopyButton text={webhook.url} label="Salin URL webhook" />
                   </div>
                 </div>
                 <div className="rounded-xl bg-soft p-3">
@@ -655,14 +649,7 @@ export default function ProjectDetailPage() {
                       readOnly
                       className="min-w-0 flex-1 rounded-xl border border-line px-3 py-2 font-mono text-xs text-ink outline-none"
                     />
-                    <button
-                      type="button"
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-sm font-medium text-blue hover:bg-line"
-                      title="Salin"
-                      aria-label="Salin"
-                    >
-                      <i className="fa-regular fa-copy" aria-hidden="true" />
-                    </button>
+                    <CopyButton text={webhook.secret} label="Salin secret webhook" />
                   </div>
                 </div>
                 <p className="text-xs text-mute">
