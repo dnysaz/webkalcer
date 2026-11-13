@@ -331,10 +331,17 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="relative mt-16">
-              <ol className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="relative mt-14">
+              <p className="mb-1 flex items-center justify-end gap-2 text-sm text-mute sm:hidden">
+                Geser
+                <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+              </p>
+              <ol className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pt-8 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:p-0 xl:grid-cols-4">
                 {PROCESS_STEPS.map((step, index) => (
-                  <li key={step.title} className="relative">
+                  <li
+                    key={step.title}
+                    className="relative w-[85%] shrink-0 snap-start sm:w-auto sm:shrink"
+                  >
                     {index < PROCESS_STEPS.length - 1 && (
                       <span
                         aria-hidden="true"
