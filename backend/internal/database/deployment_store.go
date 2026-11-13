@@ -33,7 +33,7 @@ func (s *DeploymentStore) Create(projectID string, status string, log string) (*
 }
 
 func (s *DeploymentStore) GetByProjectID(projectID string) ([]*Deployment, error) {
-	var deployments []*Deployment
+	deployments := []*Deployment{}
 	query := `SELECT * FROM deployments WHERE project_id = ? ORDER BY created_at DESC`
 	err := s.db.Select(&deployments, query, projectID)
 	return deployments, err

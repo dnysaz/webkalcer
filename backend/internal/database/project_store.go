@@ -76,7 +76,7 @@ func (s *ProjectStore) GetByID(projectID string) (*Project, error) {
 }
 
 func (s *ProjectStore) GetByUserID(userID string) ([]*Project, error) {
-	var projects []*Project
+	projects := []*Project{}
 	query := `SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC`
 	err := s.db.Select(&projects, query, userID)
 	if err == nil {

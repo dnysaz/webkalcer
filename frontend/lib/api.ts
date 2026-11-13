@@ -155,8 +155,8 @@ export async function sendOrder(input: OrderInput): Promise<void> {
 /* ---------- Projects ---------- */
 
 export async function listProjects(): Promise<Project[]> {
-  const data = await api<{ projects: Project[] }>("/api/projects");
-  return data.projects;
+  const data = await api<{ projects: Project[] | null }>("/api/projects");
+  return data.projects ?? [];
 }
 
 export async function getProject(id: string): Promise<Project> {
@@ -203,8 +203,10 @@ export async function checkSubdomain(
 /* ---------- Env ---------- */
 
 export async function getEnvKeys(id: string): Promise<string[]> {
-  const data = await api<{ env_keys: string[] }>(`/api/projects/${id}/env`);
-  return data.env_keys;
+  const data = await api<{ env_keys: string[] | null }>(
+    `/api/projects/${id}/env`,
+  );
+  return data.env_keys ?? [];
 }
 
 /** Merge semantics: value string kosong = hapus key; key tak dikirim = tetap. */
@@ -212,11 +214,14 @@ export async function updateEnv(
   id: string,
   env_vars: Record<string, string>,
 ): Promise<string[]> {
-  const data = await api<{ env_keys: string[] }>(`/api/projects/${id}/env`, {
-    method: "POST",
-    json: { env_vars },
-  });
-  return data.env_keys;
+  const data = await api<{ env_keys: string[] | null }>(
+    `/api/projects/${id}/env`,
+    {
+      method: "POST",
+      json: { env_vars },
+    },
+  );
+  return data.env_keys ?? [];
 }
 
 /* ---------- Deploy & deployments ---------- */
@@ -226,10 +231,10 @@ export async function redeploy(id: string): Promise<void> {
 }
 
 export async function listDeployments(id: string): Promise<Deployment[]> {
-  const data = await api<{ deployments: Deployment[] }>(
+  const data = await api<{ deployments: Deployment[] | null }>(
     `/api/projects/${id}/deployments`,
   );
-  return data.deployments;
+  return data.deployments ?? [];
 }
 
 export async function rollback(
@@ -268,10 +273,14 @@ export async function listGithubRepos(
   page = 1,
   perPage = 100,
 ): Promise<{ repos: GithubRepo[]; hasMore: boolean }> {
-  const data = await api<{ repos: GithubRepo[]; page: number; has_more: boolean }>(
+  const data = await api<{
+    repos: GithubRepo[] | null;
+    page: number;
+    has_more: boolean;
+  }>(
     `/api/github/repos?page=${page}&per_page=${perPage}`,
   );
-  return { repos: data.repos, hasMore: data.has_more };
+  return { repos: data.repos ?? [], hasMore: data.has_more };
 }
 
 export async function getRepoInfo(id: string): Promise<RepoInfo> {
