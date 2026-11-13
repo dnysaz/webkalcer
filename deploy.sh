@@ -4,9 +4,9 @@
 # ============================================================================
 # Asumsi:
 #   - DNS: webkalcer.com dan *.webkalcer.com sudah diarahkan ke IP VPS
-#     (Cloudflare proxied, SSL/TLS mode "Full (strict)" atau "Full").
-#   - HTTPS diterminasi di Cloudflare; nginx di VPS cukup mendengar HTTP (80)
-#     ATAU menggunakan Cloudflare Origin Certificate untuk TLS end-to-end.
+#     (Cloudflare proxied). HTTPS diterminasi di Cloudflare:
+#       - Tanpa origin cert -> mode SSL "Flexible" (Cloudflare -> origin HTTP:80)
+#       - Dengan Cloudflare Origin Certificate -> mode "Full (strict)" (origin 443)
 #   - Dijalankan sebagai root atau user dengan sudo.
 #
 # Penggunaan:
@@ -30,9 +30,11 @@ CACHE_DIR="${CACHE_DIR:-/var/lib/webkalcer/cache}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 DOMAIN="${DOMAIN:-webkalcer.com}"
-WILDCARD="*.${DOMAIN}"
+# Lokasi source repo di VPS (diisi scripts/deploy-vps.sh atau manual).
+SRC_DIR="${SRC_DIR:-$BASE_DIR/src}"
 
-# Cloudflare Origin Certificate (opsional, untuk mode Full (strict)).
+# Cloudflare Origin Certificate (opsional). Tanpa file ini nginx hanya
+# listen HTTP:80, jadi mode SSL Cloudflare harus "Flexible".
 # Letakkan file di path berikut jika ingin TLS end-to-end di origin.
 ORIGIN_CERT="${ORIGIN_CERT:-/etc/ssl/cloudflare/origin.pem}"
 ORIGIN_KEY="${ORIGIN_KEY:-/etc/ssl/cloudflare/origin.key}"
@@ -53,12 +55,24 @@ log() { echo -e "\033[1;34m[deploy]\033[0m $*"; }
 err() { echo -e "\033[1;31m[deploy]\033[0m $*" >&2; }
 
 # ---------- Cek prereq ----------
-for cmd in go node npm nginx systemctl; do
+# gcc + libc headers WAJIB: driver SQLite (github.com/mattn/go-sqlite3)
+# membutuhkan CGO. Build dengan CGO_ENABLED=0 akan menghasilkan stub yang
+# gagal saat runtime ("Binary was compiled with 'CGO_ENABLED=0'").
+for cmd in go gcc node npm nginx systemctl openssl; do
 	if ! command -v "$cmd" >/dev/null 2>&1; then
 		err "Perintah '$cmd' tidak ditemukan. Install dulu."
 		exit 1
 	fi
 done
+NODE_BIN="${NODE_BIN:-$(command -v node)}"
+# systemd menjalankan service sebagai $APP_USER — pastikan Node bisa diakses user itu.
+case "$NODE_BIN" in
+	/root/* | "$HOME"/*)
+		err "Node berada di $NODE_BIN yang tidak bisa diakses user $APP_USER."
+		err "Install Node system-wide (mis. /usr/bin/node) atau set NODE_BIN=/path/yang/terbaca."
+		exit 1
+		;;
+esac
 
 # ---------- User & direktori ----------
 if ! id -u "$APP_USER" >/dev/null 2>&1; then
@@ -66,15 +80,13 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
 	useradd --system --home "$BASE_DIR" --shell /usr/sbin/nologin "$APP_USER"
 fi
 
-mkdir -p "$BASE_DIR" "$BACKEND_DIR" "$FRONTEND_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer
+mkdir -p "$BASE_DIR" "$BACKEND_DIR" "$BACKEND_DIR/data" "$FRONTEND_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer
 chown -R "$APP_USER:$APP_GROUP" "$BASE_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer
 
 # ---------- Build backend ----------
 if [ "$ONLY_FRONTEND" -eq 0 ]; then
 	if [ "$NO_BUILD" -eq 0 ]; then
 		log "Build backend..."
-		# Asumsi repo sudah di-clone ke $BASE_DIR/src atau jalankan dari direktori repo.
-		SRC_DIR="${SRC_DIR:-$BASE_DIR/src}"
 		if [ ! -d "$SRC_DIR/backend" ]; then
 			err "Folder sumber backend tidak ditemukan di $SRC_DIR/backend"
 			err "Set SRC_DIR=/path/ke/repo lalu jalankan ulang."
@@ -82,14 +94,33 @@ if [ "$ONLY_FRONTEND" -eq 0 ]; then
 		fi
 		cd "$SRC_DIR/backend"
 		go mod download
-		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o "$BACKEND_DIR/webkalcer-backend" ./cmd/server
-		# Salin .env (jangan timpa jika sudah ada)
-		if [ ! -f "$BACKEND_DIR/.env" ]; then
-			cp "$SRC_DIR/backend/.env.example" "$BACKEND_DIR/.env"
-			log "File .env dibuat dari .env.example — ISI kredensial lalu restart."
+		# CGO_ENABLED=1: wajib untuk go-sqlite3. VPS harus punya gcc.
+		CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o "$BACKEND_DIR/webkalcer-backend" ./cmd/server
+		chown "$APP_USER:$APP_GROUP" "$BACKEND_DIR/webkalcer-backend"
+	fi
+
+	# ---------- .env backend (juga saat --no-build) ----------
+	# Salin .env contoh bila belum ada; kredensial asli tidak pernah ditimpa.
+	if [ ! -f "$BACKEND_DIR/.env" ]; then
+		if [ ! -f "$SRC_DIR/backend/.env.example" ]; then
+			err "File $SRC_DIR/backend/.env.example tidak ditemukan."
+			exit 1
 		fi
-		# Salin binary & env ke lokasi kerja
-		chown "$APP_USER:$APP_GROUP" "$BACKEND_DIR/webkalcer-backend" "$BACKEND_DIR/.env"
+		cp "$SRC_DIR/backend/.env.example" "$BACKEND_DIR/.env"
+		log "File .env dibuat dari .env.example — ISI kredensial lalu restart."
+	fi
+	chown "$APP_USER:$APP_GROUP" "$BACKEND_DIR/.env"
+	chown -R "$APP_USER:$APP_GROUP" "$BACKEND_DIR/data"
+
+	# SESSION_SECRET wajib terisi saat GIN_MODE=release (backend menolak start).
+	if ! grep -qE '^SESSION_SECRET=.+' "$BACKEND_DIR/.env"; then
+		SECRET="$(openssl rand -hex 32)"
+		if grep -q '^SESSION_SECRET=' "$BACKEND_DIR/.env"; then
+			sed -i "s|^SESSION_SECRET=.*|SESSION_SECRET=${SECRET}|" "$BACKEND_DIR/.env"
+		else
+			printf 'SESSION_SECRET=%s\n' "$SECRET" >>"$BACKEND_DIR/.env"
+		fi
+		log "SESSION_SECRET digenerate otomatis (mengganti sesi lama)."
 	fi
 
 	# ---------- systemd unit backend ----------
@@ -105,6 +136,7 @@ User=$APP_USER
 Group=$APP_GROUP
 WorkingDirectory=$BACKEND_DIR
 EnvironmentFile=$BACKEND_DIR/.env
+Environment=GIN_MODE=release
 ExecStart=$BACKEND_DIR/webkalcer-backend
 Restart=on-failure
 RestartSec=5
@@ -117,33 +149,39 @@ LimitNOFILE=65535
 WantedBy=multi-user.target
 EOF
 	systemctl daemon-reload
-	systemctl enable --now webkalcer-backend
+	systemctl enable webkalcer-backend
+	# restart (bukan enable --now) supaya binary baru benar-benar dipakai.
+	systemctl restart webkalcer-backend
 fi
 
 # ---------- Build frontend ----------
 if [ "$ONLY_BACKEND" -eq 0 ]; then
 	if [ "$NO_BUILD" -eq 0 ]; then
 		log "Build frontend..."
-		SRC_DIR="${SRC_DIR:-$BASE_DIR/src}"
-		if [ ! -d "$SRC_DIR/Frontend" ]; then
-			err "Folder sumber frontend tidak ditemukan di $SRC_DIR/Frontend"
+		if [ ! -d "$SRC_DIR/frontend" ]; then
+			err "Folder sumber frontend tidak ditemukan di $SRC_DIR/frontend"
 			exit 1
 		fi
-		cd "$SRC_DIR/Frontend"
-		# Pastikan .env.local production
-		if [ ! -f .env.local ]; then
-			cp .env.example .env.local
-		fi
-		# Paksa domain platform ke webkalcer.com
-		sed -i "s/^NEXT_PUBLIC_PLATFORM_DOMAIN=.*/NEXT_PUBLIC_PLATFORM_DOMAIN=${DOMAIN}/" .env.local
-		sed -i "s/^NEXT_PUBLIC_API_URL=.*/NEXT_PUBLIC_API_URL=https:\/\/api.${DOMAIN}/" .env.local
-		npm ci
+		cd "$SRC_DIR/frontend"
+		# Tulis .env.local production secara eksplisit. NEXT_PUBLIC_* di-inline
+		# saat build, jadi nilai ini harus benar sebelum `npm run build`.
+		cat > .env.local <<ENVEOF
+NEXT_PUBLIC_API_URL=https://api.${DOMAIN}
+NEXT_PUBLIC_PLATFORM_DOMAIN=${DOMAIN}
+ENVEOF
+		cat .env.local
+		# --include=dev: `next build` butuh devDependencies walau NODE_ENV=production.
+		npm ci --include=dev --no-audit --no-fund
 		npm run build
-		# Salin hasil build (standalone) ke direktori deploy
-		rm -rf "$FRONTEND_DIR/.next" "$FRONTEND_DIR/public" "$FRONTEND_DIR/package.json"
-		cp -r .next "$FRONTEND_DIR/"
-		cp -r public "$FRONTEND_DIR/" 2>/dev/null || true
-		cp package.json package-lock.json "$FRONTEND_DIR/" 2>/dev/null || true
+		# Salin hasil build standalone (server.js + node_modules minimal).
+		# Dengan output:"standalone" VPS tidak perlu npm install saat runtime.
+		# Hentikan service dulu: folder kerja-nya akan dihapus.
+		systemctl stop webkalcer-frontend 2>/dev/null || true
+		rm -rf "$FRONTEND_DIR"
+		mkdir -p "$FRONTEND_DIR/.next"
+		cp -r .next/standalone/. "$FRONTEND_DIR/"
+		cp -r .next/static "$FRONTEND_DIR/.next/"
+		cp -r public "$FRONTEND_DIR/"
 		chown -R "$APP_USER:$APP_GROUP" "$FRONTEND_DIR"
 	fi
 
@@ -161,8 +199,8 @@ Group=$APP_GROUP
 WorkingDirectory=$FRONTEND_DIR
 Environment=NODE_ENV=production
 Environment=PORT=$FRONTEND_PORT
-EnvironmentFile=-$FRONTEND_DIR/.env.local
-ExecStart=/usr/bin/npm run start
+Environment=HOSTNAME=127.0.0.1
+ExecStart=$NODE_BIN server.js
 Restart=on-failure
 RestartSec=5
 StandardOutput=append:/var/log/webkalcer/frontend.log
@@ -172,108 +210,184 @@ StandardError=append:/var/log/webkalcer/frontend.log
 WantedBy=multi-user.target
 EOF
 	systemctl daemon-reload
-	systemctl enable --now webkalcer-frontend
+	systemctl enable webkalcer-frontend
+	systemctl restart webkalcer-frontend
 fi
 
 # ---------- nginx ----------
 log "Memasang konfigurasi nginx..."
-# Tentukan apakah origin cert tersedia (mode Full strict)
+# Tentukan apakah origin cert tersedia (mode Full strict). Tanpa cert:
+# nginx hanya listen HTTP:80 -> Cloudflare harus mode "Flexible".
 if [ -f "$ORIGIN_CERT" ] && [ -f "$ORIGIN_KEY" ]; then
 	LISTEN_SSL="listen 443 ssl http2;"
 	SSL_BLOCK="ssl_certificate $ORIGIN_CERT; ssl_certificate_key $ORIGIN_KEY; ssl_protocols TLSv1.2 TLSv1.3;"
 else
 	LISTEN_SSL=""
 	SSL_BLOCK=""
-	log "Origin cert tidak ditemukan — nginx hanya listen HTTP (Cloudflare Full mode)."
+	log "Origin cert tidak ditemukan — nginx hanya listen HTTP:80."
+	log "Set Cloudflare SSL/TLS mode = FLEXIBLE (bukan Full)."
 fi
 
+mkdir -p /etc/nginx/snippets
+cat > /etc/nginx/snippets/webkalcer-realip.conf <<'NGINXEOF'
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 104.16.0.0/13;
+set_real_ip_from 104.24.0.0/14;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 131.0.72.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2a06:98c0::/29;
+set_real_ip_from 2c0f:f248::/32;
+real_ip_header CF-Connecting-IP;
+NGINXEOF
+
 cat > /etc/nginx/sites-available/webkalcer <<EOF
-# Main site + wildcard subdomain (hasil build pengguna disajikan oleh backend SiteHandler)
+# Protokol asli klien (dikirim Cloudflare). Dipakai agar cookie Secure/HSTS
+# tetap benar walau koneksi Cloudflare -> origin memakai HTTP.
+map \$http_x_forwarded_proto \$wk_forwarded_proto {
+	default \$scheme;
+	https   https;
+	http    http;
+}
+
+# Upstream layanan
+upstream webkalcer_backend {
+	server 127.0.0.1:${BACKEND_PORT};
+	keepalive 16;
+}
+upstream webkalcer_frontend {
+	server 127.0.0.1:${FRONTEND_PORT};
+	keepalive 16;
+}
+
+# ---------- Situs utama: webkalcer.com + www ----------
 server {
 	listen 80;
 	$LISTEN_SSL
-	server_name ${DOMAIN} www.${DOMAIN} *.${DOMAIN};
+	server_name ${DOMAIN} www.${DOMAIN};
 
 	$SSL_BLOCK
-
-	# Cloudflare Real IP
-	set_real_ip_from 103.21.244.0/22;
-	set_real_ip_from 103.22.200.0/22;
-	set_real_ip_from 103.31.4.0/22;
-	set_real_ip_from 104.16.0.0/13;
-	set_real_ip_from 104.24.0.0/14;
-	set_real_ip_from 108.162.192.0/18;
-	set_real_ip_from 131.0.72.0/22;
-	set_real_ip_from 141.101.64.0/18;
-	set_real_ip_from 162.158.0.0/15;
-	set_real_ip_from 172.64.0.0/13;
-	set_real_ip_from 173.245.48.0/20;
-	set_real_ip_from 188.114.96.0/20;
-	set_real_ip_from 190.93.240.0/20;
-	set_real_ip_from 197.234.240.0/22;
-	set_real_ip_from 198.41.128.0/17;
-	set_real_ip_from 2400:cb00::/32;
-	set_real_ip_from 2606:4700::/32;
-	set_real_ip_from 2803:f800::/32;
-	set_real_ip_from 2405:b500::/32;
-	set_real_ip_from 2405:8100::/32;
-	set_real_ip_from 2a06:98c0::/29;
-	set_real_ip_from 2c0f:f248::/32;
-	real_ip_header CF-Connecting-IP;
+	include /etc/nginx/snippets/webkalcer-realip.conf;
 
 	# API & auth -> backend
 	location /api/ {
-		proxy_pass http://127.0.0.1:${BACKEND_PORT};
+		proxy_pass http://webkalcer_backend;
 		proxy_http_version 1.1;
 		proxy_set_header Host \$host;
 		proxy_set_header X-Real-IP \$remote_addr;
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$scheme;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		proxy_read_timeout 120s;
 		client_max_body_size 105m;
 	}
 
 	location /auth/ {
-		proxy_pass http://127.0.0.1:${BACKEND_PORT};
+		proxy_pass http://webkalcer_backend;
 		proxy_http_version 1.1;
 		proxy_set_header Host \$host;
 		proxy_set_header X-Real-IP \$remote_addr;
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$scheme;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 	}
 
 	location /health {
-		proxy_pass http://127.0.0.1:${BACKEND_PORT};
+		proxy_pass http://webkalcer_backend;
+	}
+
+	location /metrics {
+		proxy_pass http://webkalcer_backend;
 	}
 
 	# Webhook GitHub (body besar)
 	location /webhooks/ {
-		proxy_pass http://127.0.0.1:${BACKEND_PORT};
+		proxy_pass http://webkalcer_backend;
 		proxy_http_version 1.1;
 		proxy_set_header Host \$host;
 		proxy_set_header X-Real-IP \$remote_addr;
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$scheme;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		client_max_body_size 6m;
 	}
 
 	# Frontend Next.js
 	location / {
-		proxy_pass http://127.0.0.1:${FRONTEND_PORT};
+		proxy_pass http://webkalcer_frontend;
 		proxy_http_version 1.1;
 		proxy_set_header Host \$host;
 		proxy_set_header X-Real-IP \$remote_addr;
 		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-		proxy_set_header X-Forwarded-Proto \$scheme;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
 		proxy_set_header Upgrade \$http_upgrade;
 		proxy_set_header Connection "upgrade";
+	}
+}
+
+# ---------- Subdomain platform & API: *.webkalcer.com -> backend ----------
+# Backend SiteHandler melayani situs hasil build (portfolio.webkalcer.com),
+# dan route /api/ dan /auth/ melayani aplikasi (api.webkalcer.com).
+server {
+	listen 80;
+	$LISTEN_SSL
+	server_name *.${DOMAIN};
+
+	$SSL_BLOCK
+	include /etc/nginx/snippets/webkalcer-realip.conf;
+
+	location / {
+		proxy_pass http://webkalcer_backend;
+		proxy_http_version 1.1;
+		proxy_set_header Host \$host;
+		proxy_set_header X-Real-IP \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
+		proxy_set_header Upgrade \$http_upgrade;
+		proxy_set_header Connection "upgrade";
+		proxy_read_timeout 120s;
+		client_max_body_size 105m;
+	}
+}
+
+# ---------- Domain kustom pengguna (Host apa pun) -> backend ----------
+server {
+	listen 80 default_server;
+	$LISTEN_SSL
+	server_name _;
+
+	$SSL_BLOCK
+	include /etc/nginx/snippets/webkalcer-realip.conf;
+
+	location / {
+		proxy_pass http://webkalcer_backend;
+		proxy_http_version 1.1;
+		proxy_set_header Host \$host;
+		proxy_set_header X-Real-IP \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
+		proxy_set_header Upgrade \$http_upgrade;
+		proxy_set_header Connection "upgrade";
+		proxy_read_timeout 120s;
+		client_max_body_size 105m;
 	}
 }
 EOF
 
 ln -sf /etc/nginx/sites-available/webkalcer /etc/nginx/sites-enabled/webkalcer
 rm -f /etc/nginx/sites-enabled/default
-nginx -t && systemctl reload nginx
+nginx -t && (systemctl reload nginx || systemctl restart nginx)
 
 log "Selesai. Status service:"
 systemctl --no-pager status webkalcer-backend webkalcer-frontend nginx | grep -E "Active:|●" | head -20
@@ -281,7 +395,6 @@ echo
 log "Langkah berikutnya:"
 echo "  1. Edit $BACKEND_DIR/.env dan isi kredensial (GitHub/Google/Cloudflare/Sender)."
 echo "  2. sudo systemctl restart webkalcer-backend"
-echo "  3. Di Cloudflare: SSL/TLS = Full (strict) jika origin cert dipasang, atau Full."
-echo "  4. Pastikan DNS: ${DOMAIN}, www.${DOMAIN}, *.${DOMAIN} -> IP VPS (proxied)."
-EOF
-chmod +x /tmp/scratchpad/deploy.sh 2>/dev/null || true
+echo "  3. Cloudflare SSL/TLS: FLEXIBLE jika tanpa origin cert, FULL (strict) jika origin cert dipasang."
+		echo "     Aktifkan juga Always Use HTTPS + Automatic HTTPS Rewrites."
+echo "  4. DNS Cloudflare (proxied/orange cloud): @, www, *.${DOMAIN} -> IP VPS."

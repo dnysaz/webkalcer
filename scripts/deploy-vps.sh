@@ -1,82 +1,115 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================================================
-# Deploy WebKalcer ke VPS (Ubuntu/Debian) — otomatis dari repo GitHub
+# deploy-vps.sh — Deploy WebKalcer ke VPS dari komputer lokal (via SSH).
 # ============================================================================
-# Prerequisites:
-#   - SSH ke VPS dengan user root (password: NhSB2JWcriBx32j2)
-#   - Go 1.23.4 sudah installed (sudoku)
-#   - nginx, systemd, git sudah installed
-#   - Cloudflare DNS sudah diarahkan ke IP VPS
-#   - .env file di /opt/webkalcer/src/backend/.env (production values)
+# Alur:
+#   1. Cek prerequisite di VPS (git, Go, gcc, Node, nginx, openssl).
+#   2. Sinkronkan source dari GitHub ke $BASE_DIR/src (clone / fetch+reset).
+#   3. Jalankan deploy.sh di VPS (build backend+frontend, systemd, nginx).
+#   4. Health check backend & frontend.
+#
+# Penggunaan:
+#   bash scripts/deploy-vps.sh                 # deploy penuh
+#   bash scripts/deploy-vps.sh --no-build      # hanya restart service/nginx
+#   bash scripts/deploy-vps.sh --backend       # hanya backend
+#   bash scripts/deploy-vps.sh --frontend      # hanya frontend
+#
+# Kredensial SSH TIDAK disimpan di file ini. Gunakan SSH key, atau biarkan
+# ssh menanyakan password secara interaktif.
+#
+# Override lewat environment variable:
+#   VPS_HOST, VPS_PORT, VPS_USER, BRANCH, GIT_REMOTE, BASE_DIR, DOMAIN
 # ============================================================================
 
 set -euo pipefail
 
-# --- Configuration ---
-VPS_HOST="5.178.98.100"
-VPS_PORT=20153
-APP_USER="webkalcer"
-APP_GROUP="www-data"
-BASE_DIR="/opt/webkalcer"
+VPS_HOST="${VPS_HOST:-5.178.98.100}"
+VPS_PORT="${VPS_PORT:-20153}"
+VPS_USER="${VPS_USER:-root}"
+BRANCH="${BRANCH:-main}"
+GIT_REMOTE="${GIT_REMOTE:-https://github.com/dnysaz/webkalcer.git}"
+BASE_DIR="${BASE_DIR:-/opt/webkalcer}"
+DOMAIN="${DOMAIN:-webkalcer.com}"
+SSH_TARGET="${VPS_USER}@${VPS_HOST}"
+
+if ! command -v ssh >/dev/null 2>&1; then
+	echo "Perintah 'ssh' tidak ditemukan." >&2
+	exit 1
+fi
+
+# Argumen diteruskan apa adanya ke deploy.sh di VPS (--no-build/--backend/...).
+REMOTE_ARGS=""
+for arg in "$@"; do
+	case "$arg" in
+		--no-build | --backend | --frontend) REMOTE_ARGS="${REMOTE_ARGS} ${arg}" ;;
+		*)
+			echo "Argumen tidak dikenal: $arg" >&2
+			exit 1
+			;;
+	esac
+done
+
+echo "==> Deploy ke ${SSH_TARGET}:${VPS_PORT} (branch ${BRANCH})"
+
+# shellcheck disable=SC2087
+ssh \
+	-p "$VPS_PORT" \
+	-o StrictHostKeyChecking=accept-new \
+	-o ServerAliveInterval=30 \
+	"$SSH_TARGET" \
+	"GIT_REMOTE='$GIT_REMOTE' BRANCH='$BRANCH' BASE_DIR='$BASE_DIR' DOMAIN='$DOMAIN' bash -s --${REMOTE_ARGS}" <<'REMOTE_SCRIPT'
+set -euo pipefail
+
+log() { printf '\033[1;34m[vps]\033[0m %s\n' "$*"; }
+die() { printf '\033[1;31m[vps]\033[0m %s\n' "$*" >&2; exit 1; }
+
 SRC_DIR="${BASE_DIR}/src"
-DEPLOY_SCRIPT="/opt/webkalcer/src/deploy.sh"
-TARBALL="/tmp/webkalcer-deploy.tar.gz"
 
-# --- Step 1: Kill hanging git processes ---
-echo "[1/6] Membunuh proses git yang tertinggal..."
-pkill -f "git clone" 2>/dev/null || true
-pkill -f "git index-pack" 2>/dev/null || true
-sleep 2
+# ---------- 1. Prerequisite ----------
+log "Cek prerequisite..."
+missing=""
+for c in git go gcc node npm nginx systemctl openssl; do
+	command -v "$c" >/dev/null 2>&1 || missing="${missing} ${c}"
+done
+if [ -n "$missing" ]; then
+	die "Perintah berikut belum terpasang:${missing}
+Install dulu, contoh (Ubuntu/Debian):
+  apt-get update && apt-get install -y build-essential git nginx openssl curl
+  # Go:   https://go.dev/dl/
+  # Node: https://nodejs.org/ (butuh Node >= 20)"
+fi
 
-# --- Step 2: Remove old src and clone with depth/single-branch ---
-echo "[2/6] Cloning repository from GitHub..."
-cd "$BASE_DIR"
-rm -rf "$SRC_DIR"
-# Use --depth 1 --single-branch for speed; fallback to full clone if needed
-if git clone --depth 1 --single-branch "https://github.com/dnysaz/webkalcer.git" "$SRC_DIR" 2>&1 | tail -5; then
-    echo "Clone successful (shallow)."
+# ---------- 2. Sinkronisasi source ----------
+mkdir -p "$BASE_DIR"
+if [ -d "$SRC_DIR/.git" ]; then
+	log "Update source ${BRANCH}..."
+	git -C "$SRC_DIR" remote set-url origin "$GIT_REMOTE"
+	git -C "$SRC_DIR" fetch --depth 1 origin "$BRANCH"
+	git -C "$SRC_DIR" reset --hard FETCH_HEAD
+	# Hapus file untracked (artefak build), tapi JANGAN -x agar .env tetap ada.
+	git -C "$SRC_DIR" clean -fd
 else
-    echo "Fallback: full clone (may take longer)..."
-    git clone "https://github.com/dnysaz/webkalcer.git" "$SRC_DIR" 2>&1 | tail -5
+	log "Clone source ${BRANCH}..."
+	rm -rf "$SRC_DIR"
+	git clone --depth 1 --single-branch --branch "$BRANCH" "$GIT_REMOTE" "$SRC_DIR"
 fi
+# Pastikan build lama tidak dipakai ulang.
+rm -rf "$SRC_DIR/frontend/.next" "$SRC_DIR/backend/webkalcer-backend"
 
-# --- Step 3: Fallback: use local tarball if clone fails ---
-if [ ! -d "$SRC_DIR/backend" ]; then
-    echo "[3/6] Using local tarball as fallback..."
-    cd "$BASE_DIR"
-    tar -xzf "$TARBALL" -C "$SRC_DIR" --strip-components=1 2>&1 | tail -5
-fi
+[ -f "$SRC_DIR/deploy.sh" ] || die "deploy.sh tidak ditemukan di $SRC_DIR"
 
-# --- Step 4: Ensure backend binary and .env exist ---
-echo "[4/6] Ensuring backend binary and .env..."
-if [ ! -f "$SRC_DIR/backend/webkalcer-backend" ]; then
-    echo "Backend binary not found — building..."
-    cd "$SRC_DIR/backend"
-    go mod download
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o webkalcer-backend ./cmd/server
-fi
+# ---------- 3. deploy.sh ----------
+log "Menjalankan deploy.sh..."
+SRC_DIR="$SRC_DIR" DOMAIN="$DOMAIN" bash "$SRC_DIR/deploy.sh" "$@"
 
-# --- Step 5: Copy .env.local with production values ---
-echo "[5/6] Setting up production environment..."
-if [ ! -f "$SRC_DIR/frontend/.env.local" ]; then
-    cp "$SRC_DIR/frontend/.env.local" "$SRC_DIR/frontend/.env.local"
-fi
+# ---------- 4. Health check ----------
+log "Health check..."
+sleep 2
+curl -fsS http://127.0.0.1:8080/health >/dev/null && echo "  backend  : OK" || echo "  backend  : GAGAL"
+curl -fsS -o /dev/null -w '  frontend : HTTP %{http_code}\n' http://127.0.0.1:3000/ || echo "  frontend : GAGAL"
 
-# Generate SESSION_SECRET if empty
-if [ -z "$(grep -q "^SESSION_SECRET=" "$SRC_DIR/backend/.env")" ]; then
-    SESSION_SECRET=$(openssl rand -hex 32)
-    echo "SESSION_SECRET=$(echo $SESSION_SECRET)" >> "$SRC_DIR/backend/.env"
-fi
-
-# --- Step 6: Restart services ---
-echo "[6/6] Restarting services..."
-sudo systemctl daemon-reload
-sudo systemctl enable --now webkalcer-backend
-sudo systemctl enable --now webkalcer-frontend
-sudo systemctl restart nginx
-
-# Validate
-echo ""
-echo "=== Deployment complete ==="
-echo "Check status with: systemctl status webkalcer-backend webkalcer-frontend nginx"
-echo "Health check: curl http://localhost:8080/health"
+echo
+echo "=== Deployment selesai ==="
+echo "Status : systemctl status webkalcer-backend webkalcer-frontend nginx"
+echo "Log    : tail -f /var/log/webkalcer/backend.log"
+REMOTE_SCRIPT
