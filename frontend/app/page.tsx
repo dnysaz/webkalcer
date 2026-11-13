@@ -58,6 +58,45 @@ function SectionLabel({ color, children }: { color: string; children: string }) 
   );
 }
 
+const PROCESS_STEPS = [
+  {
+    number: "1",
+    title: "Konsultasi",
+    desc: "Ceritakan usaha, target, dan referensi tampilan.",
+    icon: "fa-regular fa-comments",
+    dot: "bg-blue text-white",
+    bar: "bg-blue",
+    iconColor: "text-blue",
+  },
+  {
+    number: "2",
+    title: "Desain",
+    desc: "Kami siapkan rancangan untuk Anda setujui.",
+    icon: "fa-regular fa-pen-to-square",
+    dot: "bg-red text-white",
+    bar: "bg-red",
+    iconColor: "text-red",
+  },
+  {
+    number: "3",
+    title: "Pembangunan",
+    desc: "Desain diubah menjadi website yang cepat dan rapi.",
+    icon: "fa-solid fa-code",
+    dot: "bg-orange text-ink",
+    bar: "bg-orange",
+    iconColor: "text-orange",
+  },
+  {
+    number: "4",
+    title: "Online",
+    desc: "Website tayang di hosting WebKalcer.",
+    icon: "fa-solid fa-globe",
+    dot: "bg-[#34A853] text-white",
+    bar: "bg-[#34A853]",
+    iconColor: "text-[#34A853]",
+  },
+];
+
 export default function LandingPage() {
   return (
     <>
@@ -282,31 +321,61 @@ export default function LandingPage() {
         <section id="proses" className="bg-soft py-16 sm:py-24 xl:py-32">
           <div className="wrap">
             <SectionLabel color="bg-blue">Proses</SectionLabel>
-            <h2 className="mt-3 max-w-none text-4xl leading-[1.12] font-medium sm:text-5xl xl:text-6xl">
-              Dari obrolan sampai online, tanpa ribet.
-            </h2>
-            <ol className="mt-14 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              <li className="rounded-3xl bg-white p-8">
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-blue text-xl font-medium text-white">1</span>
-                <h3 className="mt-5 text-2xl font-medium">Konsultasi</h3>
-                <p className="mt-2 text-mute">Ceritakan usaha, target, dan referensi tampilan.</p>
-              </li>
-              <li className="rounded-3xl bg-white p-8">
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-red text-xl font-medium text-white">2</span>
-                <h3 className="mt-5 text-2xl font-medium">Desain</h3>
-                <p className="mt-2 text-mute">Kami siapkan rancangan untuk Anda setujui.</p>
-              </li>
-              <li className="rounded-3xl bg-white p-8">
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-orange text-xl font-medium text-ink">3</span>
-                <h3 className="mt-5 text-2xl font-medium">Pembangunan</h3>
-                <p className="mt-2 text-mute">Desain diubah menjadi website yang cepat dan rapi.</p>
-              </li>
-              <li className="rounded-3xl bg-white p-8">
-                <span className="grid h-12 w-12 place-items-center rounded-full bg-blue text-xl font-medium text-white">4</span>
-                <h3 className="mt-5 text-2xl font-medium">Online</h3>
-                <p className="mt-2 text-mute">Website tayang di hosting WebKalcer.</p>
-              </li>
-            </ol>
+            <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <h2 className="max-w-2xl text-4xl leading-[1.12] font-medium sm:text-5xl xl:text-6xl">
+                Dari obrolan sampai online, tanpa ribet.
+              </h2>
+              <p className="max-w-sm text-lg leading-relaxed text-mute">
+                Empat langkah jelas — dari konsultasi awal sampai website Anda
+                tayang.
+              </p>
+            </div>
+
+            <div className="relative mt-16">
+              <ol className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {PROCESS_STEPS.map((step, index) => (
+                  <li key={step.title} className="relative">
+                    {index < PROCESS_STEPS.length - 1 && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-12 top-0 hidden h-px w-[calc(100%+1.5rem)] bg-line xl:block"
+                      />
+                    )}
+                    <div className="relative flex h-full flex-col rounded-2xl border border-line bg-white p-6 pt-10 transition-all hover:border-blue/40 hover:shadow-[0_1px_2px_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] sm:p-7 sm:pt-10">
+                      <span
+                        className={`absolute -top-6 left-6 grid h-12 w-12 place-items-center rounded-full text-lg font-medium ring-4 ring-soft ${step.dot}`}
+                      >
+                        {step.number}
+                      </span>
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wider text-mute">
+                            Langkah 0{index + 1}
+                          </p>
+                          <h3 className="mt-1.5 text-xl font-medium tracking-tight text-ink">
+                            {step.title}
+                          </h3>
+                        </div>
+                        <i
+                          className={`${step.icon} ${step.iconColor} mt-1 text-lg`}
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <p className="mt-2 flex-1 text-[15px] leading-relaxed text-mute">
+                        {step.desc}
+                      </p>
+                      <div
+                        className="mt-6 flex items-center gap-2"
+                        aria-hidden="true"
+                      >
+                        <span className={`h-1 w-9 rounded-full ${step.bar}`} />
+                        <span className="h-1 flex-1 rounded-full bg-soft" />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </section>
 
