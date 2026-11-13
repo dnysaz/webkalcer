@@ -693,8 +693,9 @@ export default function ProjectDetailPage() {
               },
             })
           }
-          className="btn text-base font-medium text-red hover:bg-red/5"
+          className="btn inline-flex items-center gap-2 rounded-full border border-red/40 bg-white px-6 py-2.5 text-base font-medium text-red transition-colors hover:border-red hover:bg-red hover:text-white"
         >
+          <i className="fa-solid fa-trash-can" aria-hidden="true" />
           Hapus project
         </button>
       </div>
