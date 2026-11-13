@@ -536,7 +536,7 @@ const sections: LegalSection[] = [
               0858-0556-6344
             </a>
           </li>
-          <li>Alamat korespondensi: Jakarta, Indonesia (detail menyusul)</li>
+          <li>Alamat korespondensi: Denpasar, Bali — Indonesia (detail menyusul)</li>
         </ul>
         <p>
           Kami berusaha merespons seluruh korespondensi pada jam kerja,
