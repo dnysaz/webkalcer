@@ -9,22 +9,24 @@ import (
 )
 
 type Server struct {
-	cfg           *config.Config
-	db            *database.Database
-	srv           *http.Server
-	worker        *builder.Worker
+	cfg            *config.Config
+	db             *database.Database
+	srv            *http.Server
+	worker         *builder.Worker
 	processManager *ProcessManager
 }
 
 func New(cfg *config.Config, db *database.Database, worker *builder.Worker) (*Server, *ProcessManager) {
-	r := NewRouter(cfg, db, worker)
+	// Satu ProcessManager dipakai router (site/project handler) dan signal
+	// handler, supaya proses SSR benar-benar dihentikan saat service restart.
 	pm := NewProcessManager()
+	r := NewRouter(cfg, db, worker, pm)
 
 	return &Server{
-		cfg:           cfg,
-		db:            db,
-		srv:           &http.Server{Addr: cfg.Server.Addr, Handler: r},
-		worker:        worker,
+		cfg:            cfg,
+		db:             db,
+		srv:            &http.Server{Addr: cfg.Server.Addr, Handler: r},
+		worker:         worker,
 		processManager: pm,
 	}, pm
 }

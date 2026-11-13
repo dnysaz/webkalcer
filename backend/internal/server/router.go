@@ -33,7 +33,7 @@ func NewStores(db *database.Database) *Stores {
 }
 
 // NewRouter membuat Gin engine dengan semua route terdaftar.
-func NewRouter(cfg *config.Config, db *database.Database, worker *builder.Worker) *gin.Engine {
+func NewRouter(cfg *config.Config, db *database.Database, worker *builder.Worker, pm *ProcessManager) *gin.Engine {
 	r := gin.Default()
 	// Percayai hanya reverse proxy lokal (nginx) agar X-Forwarded-For tidak
 	// bisa dipalsukan untuk melewati rate limit.
@@ -69,8 +69,7 @@ func NewRouter(cfg *config.Config, db *database.Database, worker *builder.Worker
 		panic(err)
 	}
 	// ProcessManager dipakai juga oleh handler project untuk menghentikan
-	// server SSR saat project deleted.
-	pm := NewProcessManager()
+	// server SSR saat project deleted (instance sama dengan signal handler).
 	projectHandler := handler.NewProjectHandler(projectStore, userStore, sessionStore, stores.Deployment, worker, dns.New(cfg.Cloudflare), pm, cfg.Build.SitesDir, cfg.Server.FrontendURL)
 	githubHandler := handler.NewGitHubHandler(sessionStore, userStore)
 	orderHandler := handler.NewOrderHandler(cfg.Email, email.NewSender(cfg.Email.SenderAPIKey))
