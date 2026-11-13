@@ -5,8 +5,10 @@
 # Asumsi:
 #   - DNS: webkalcer.com dan *.webkalcer.com sudah diarahkan ke IP VPS
 #     (Cloudflare proxied). HTTPS diterminasi di Cloudflare:
-#       - Tanpa origin cert -> mode SSL "Flexible" (Cloudflare -> origin HTTP:80)
-#       - Dengan Cloudflare Origin Certificate -> mode "Full (strict)" (origin 443)
+#       - Ada Cloudflare Origin Cert / Let's Encrypt di origin -> "Full (strict)"
+#       - Tanpa sertifikat di origin -> "Flexible" (Cloudflare -> origin HTTP:80)
+#     Sertifikat dideteksi otomatis: Cloudflare Origin Cert, lalu
+#     /etc/letsencrypt/live/<domain>/ (certbot, termasuk wildcard).
 #   - Dijalankan sebagai root atau user dengan sudo.
 #
 # Penggunaan:
@@ -216,17 +218,35 @@ fi
 
 # ---------- nginx ----------
 log "Memasang konfigurasi nginx..."
-# Tentukan apakah origin cert tersedia (mode Full strict). Tanpa cert:
-# nginx hanya listen HTTP:80 -> Cloudflare harus mode "Flexible".
+# Pilih sertifikat TLS origin (prioritas):
+#   1. Cloudflare Origin Certificate (ORIGIN_CERT / ORIGIN_KEY)
+#   2. Let's Encrypt yang sudah ada (certbot) untuk $DOMAIN — termasuk wildcard
+#   3. Tanpa TLS -> nginx hanya HTTP:80, Cloudflare harus mode "Flexible"
+LE_DIR="/etc/letsencrypt/live/${DOMAIN}"
 if [ -f "$ORIGIN_CERT" ] && [ -f "$ORIGIN_KEY" ]; then
+	TLS_CERT="$ORIGIN_CERT"
+	TLS_KEY="$ORIGIN_KEY"
+	SSL_MODE="Full (strict) — Cloudflare Origin Certificate"
+elif [ -f "$LE_DIR/fullchain.pem" ] && [ -f "$LE_DIR/privkey.pem" ]; then
+	TLS_CERT="$LE_DIR/fullchain.pem"
+	TLS_KEY="$LE_DIR/privkey.pem"
+	SSL_MODE="Full (strict) — Let's Encrypt ($LE_DIR)"
+else
+	TLS_CERT=""
+	TLS_KEY=""
+	SSL_MODE="Flexible — origin HTTP:80 (tanpa TLS)"
+fi
+
+if [ -n "$TLS_CERT" ]; then
 	LISTEN_SSL="listen 443 ssl http2;"
-	SSL_BLOCK="ssl_certificate $ORIGIN_CERT; ssl_certificate_key $ORIGIN_KEY; ssl_protocols TLSv1.2 TLSv1.3;"
+	SSL_BLOCK="ssl_certificate $TLS_CERT; ssl_certificate_key $TLS_KEY; ssl_protocols TLSv1.2 TLSv1.3; ssl_session_cache shared:WK:10m; ssl_session_timeout 1d;"
 else
 	LISTEN_SSL=""
 	SSL_BLOCK=""
-	log "Origin cert tidak ditemukan — nginx hanya listen HTTP:80."
+	log "TLS origin tidak ditemukan — nginx hanya listen HTTP:80."
 	log "Set Cloudflare SSL/TLS mode = FLEXIBLE (bukan Full)."
 fi
+log "Mode TLS: $SSL_MODE"
 
 mkdir -p /etc/nginx/snippets
 cat > /etc/nginx/snippets/webkalcer-realip.conf <<'NGINXEOF'
@@ -386,7 +406,15 @@ server {
 EOF
 
 ln -sf /etc/nginx/sites-available/webkalcer /etc/nginx/sites-enabled/webkalcer
-rm -f /etc/nginx/sites-enabled/default
+# Nonaktifkan site lain agar tidak bentrok server_name dengan konfigurasi ini.
+mkdir -p /etc/nginx/sites-disabled
+for f in /etc/nginx/sites-enabled/*; do
+	[ -e "$f" ] || [ -L "$f" ] || continue
+	name="$(basename "$f")"
+	[ "$name" = "webkalcer" ] && continue
+	log "Menonaktifkan site nginx lain: $name (dipindah ke /etc/nginx/sites-disabled)"
+	mv -f "$f" "/etc/nginx/sites-disabled/$name"
+done
 nginx -t && (systemctl reload nginx || systemctl restart nginx)
 
 log "Selesai. Status service:"
@@ -395,6 +423,7 @@ echo
 log "Langkah berikutnya:"
 echo "  1. Edit $BACKEND_DIR/.env dan isi kredensial (GitHub/Google/Cloudflare/Sender)."
 echo "  2. sudo systemctl restart webkalcer-backend"
-echo "  3. Cloudflare SSL/TLS: FLEXIBLE jika tanpa origin cert, FULL (strict) jika origin cert dipasang."
-		echo "     Aktifkan juga Always Use HTTPS + Automatic HTTPS Rewrites."
+echo "  3. Mode TLS origin: $SSL_MODE"
+echo "     Cloudflare SSL/TLS: FULL (strict) bila origin TLS aktif, FLEXIBLE bila tidak."
+echo "     Aktifkan juga Always Use HTTPS + Automatic HTTPS Rewrites."
 echo "  4. DNS Cloudflare (proxied/orange cloud): @, www, *.${DOMAIN} -> IP VPS."
