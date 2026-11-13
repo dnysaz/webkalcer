@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -243,25 +244,45 @@ func (b *Builder) exec(ctx context.Context, job Job, workDir, command string, lo
 		return fmt.Errorf("command failed (%s): %w", command, err)
 	}
 
-	// Baca output baris per baris supaya progres build bisa ditampilkan
-	// secara langsung, bukan menunggu perintah selesai.
+	// Baca output build progresif. JANGAN pakai bufio.Scanner yang hanya
+	// memisahkan \n — Turbopack/webpack menulis progress dengan \r, yang
+	// membuat satu "baris" membengkak tanpa batas, menghentikan pembacaan,
+	// dan menyumbat pipe (child process blocked selamanya di pipe penuh
+	// sampai timeout mematikannya). Pisahkan pada \n DAN \r dan potong
+	// segmen yang kelewat panjang.
 	var tail []string
-	scanner := bufio.NewScanner(stdout)
-	scanner.Buffer(make([]byte, 64*1024), 1024*1024)
-	for scanner.Scan() {
-		line := redact(scanner.Text(), job.Token)
-		if strings.TrimSpace(line) == "" {
-			continue
+	flush := func(raw []byte) {
+		line := string(bytes.TrimRight(raw, " \t"))
+		line = strings.TrimSpace(line)
+		if line == "" {
+			return
 		}
+		line = redact(line, job.Token)
 		logf(line)
 		tail = append(tail, line)
 		if len(tail) > 200 {
 			tail = tail[len(tail)-200:]
 		}
 	}
-	if scanErr := scanner.Err(); scanErr != nil {
-		_ = cmd.Wait()
-		return fmt.Errorf("failed to read build output: %w", scanErr)
+	reader := bufio.NewReaderSize(stdout, 64*1024)
+	var seg []byte
+	for {
+		b, err := reader.ReadByte()
+		if err != nil {
+			flush(seg)
+			break
+		}
+		switch b {
+		case '\n', '\r':
+			flush(seg)
+			seg = seg[:0]
+		default:
+			seg = append(seg, b)
+			if len(seg) >= 4096 {
+				flush(seg)
+				seg = seg[:0]
+			}
+		}
 	}
 
 	if err := cmd.Wait(); err != nil {

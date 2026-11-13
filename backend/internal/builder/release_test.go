@@ -1,9 +1,13 @@
 package builder
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
+
+	"webkalcer/backend/internal/config"
 )
 
 func TestActivateRelease(t *testing.T) {
@@ -51,5 +55,42 @@ func TestActivateRelease(t *testing.T) {
 	}
 	if err := ActivateRelease(target, "release-tidak-ada"); err == nil {
 		t.Fatal("ActivateRelease menerima rilis yang tidak ada")
+	}
+}
+
+// TestExecHandlesCarriageReturnProgress memastikan output dengan progress
+// \r (tanpa \n) seperti Turbopack tidak membuat pipe mandek. Sebelumnya
+// bufio.Scanner hanya memotong di \n sehingga progress menjadi satu
+// "baris" raksasa, pembacaan berhenti, dan child process tersumbat.
+func TestExecHandlesCarriageReturnProgress(t *testing.T) {
+	b := New(config.BuildConfig{TimeoutSeconds: 30, SitesDir: t.TempDir()})
+	workDir := t.TempDir()
+
+	var mu sync.Mutex
+	var lines []string
+	logf := func(line string) {
+		mu.Lock()
+		lines = append(lines, line)
+		mu.Unlock()
+	}
+
+	// 300 KB progress dengan \r tanpa \n + beberapa baris normal + exit 0.
+	cmd := `printf '▲ Next.js 16.3.0 (Turbopack)\n'; i=0; while [ $i -lt 3000 ]; do printf 'chunk %06d of compiled module graphql-tools-%d\r' "$i" "$i"; i=$((i+1)); done; printf '\n✓ Compiled successfully\n'; exit 0`
+	if err := b.exec(context.Background(), Job{}, workDir, cmd, logf); err != nil {
+		t.Fatalf("exec error: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(lines) < 2 {
+		t.Fatalf("hanya %d baris tertangkap, ingin banyak progress", len(lines))
+	}
+	foundCompiled := false
+	for _, l := range lines {
+		if l == "✓ Compiled successfully" {
+			foundCompiled = true
+		}
+	}
+	if !foundCompiled {
+		t.Fatal("baris sukses tidak tertangkap")
 	}
 }
