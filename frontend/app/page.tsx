@@ -107,7 +107,7 @@ export default function LandingPage() {
         {/* 1. HERO */}
         <section className="wrap pt-12 pb-16 sm:pt-16 sm:pb-24 xl:pt-24">
           <div className="mx-auto max-w-6xl text-center">
-            <h1 className="text-4xl leading-[1.08] font-medium sm:text-6xl xl:text-8xl">
+            <h1 className="text-[2.625rem] leading-[1.1] font-bold sm:text-6xl xl:text-8xl">
               Website profesional untuk <span className="text-blue">bisnis</span> di Indonesia
             </h1>
             <p className="mx-auto mt-8 max-w-3xl text-xl leading-relaxed text-mute xl:text-2xl">
