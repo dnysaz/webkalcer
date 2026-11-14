@@ -33,6 +33,7 @@ func NewWorker(b *Builder, projects *database.ProjectStore, deployments *databas
 
 // Start menjalankan sejumlah goroutine pemroses.
 func (w *Worker) Start(concurrency int) {
+	w.recoverStaleBuilds()
 	if concurrency < 1 {
 		concurrency = 1
 	}
@@ -40,6 +41,27 @@ func (w *Worker) Start(concurrency int) {
 		go w.loop()
 	}
 	log.Printf("build worker started (mode=%s, concurrency=%d)", w.builder.Mode(), concurrency)
+}
+
+// recoverStaleBuilds menandai deployment/project yang tertinggal di status
+// "building" sebagai gagal. Build berjalan sebagai child process backend,
+// jadi restart/OOM backend meninggalkan record yang tidak akan pernah selesai.
+func (w *Worker) recoverStaleBuilds() {
+	const message = "deployment interrupted: the backend restarted before the build finished"
+	if w.deployments != nil {
+		if n, err := w.deployments.FailStaleBuilding(message); err != nil {
+			log.Printf("failed to recover stale deployments: %v", err)
+		} else if n > 0 {
+			log.Printf("marked %d stale deployment(s) as failed", n)
+		}
+	}
+	if w.projects != nil {
+		if n, err := w.projects.FailStaleBuilds(); err != nil {
+			log.Printf("failed to recover stale projects: %v", err)
+		} else if n > 0 {
+			log.Printf("marked %d stale project(s) as failed", n)
+		}
+	}
 }
 
 // Enqueue memasukkan job ke antrian. Mengembalikan error bila antrian penuh.

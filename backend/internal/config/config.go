@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -72,6 +73,10 @@ type BuildConfig struct {
 	SitesDir string `env:"SITES_DIR" default:"./data/sites"`
 	// TimeoutSeconds membatasi durasi satu build.
 	TimeoutSeconds int `env:"BUILD_TIMEOUT_SECONDS" default:"600"`
+	// BuildNodeHeapMB membatasi heap Node saat build (NODE_OPTIONS).
+	// Build yang kehabisan memori gagal dengan rapi alih-alih memicu OOM
+	// killer yang bisa membunuh backend.
+	BuildNodeHeapMB int `env:"BUILD_NODE_HEAP_MB" default:"1024"`
 }
 
 func Load() (*Config, error) {
@@ -103,9 +108,10 @@ func Load() (*Config, error) {
 			Target: os.Getenv("CLOUDFLARE_TARGET"),
 		},
 		Build: BuildConfig{
-			CacheDir:       getEnv("CACHE_DIR", "/tmp/webkalcer/cache"),
-			SitesDir:       getEnv("SITES_DIR", "./data/sites"),
-			TimeoutSeconds: getEnvInt("BUILD_TIMEOUT_SECONDS", 600),
+			CacheDir:        getEnv("CACHE_DIR", "/tmp/webkalcer/cache"),
+			SitesDir:        getEnv("SITES_DIR", "./data/sites"),
+			TimeoutSeconds:  getEnvInt("BUILD_TIMEOUT_SECONDS", 600),
+			BuildNodeHeapMB: getEnvInt("BUILD_NODE_HEAP_MB", 1024),
 		},
 		Email: EmailConfig{
 			ResendAPIKey: os.Getenv("RESEND_API_KEY"),
@@ -114,6 +120,15 @@ func Load() (*Config, error) {
 			FromEmail:    getEnv("EMAIL_FROM", "no-reply@webkalcer.com"),
 			FromName:     getEnv("EMAIL_FROM_NAME", "WebKalcer"),
 		},
+	}
+	// Path relatif membuat symlink rilis rapuh (bergantung CWD service).
+	// Paksa absolut supaya symlink menunjuk lokasi yang sama dari mana pun
+	// backend dijalankan.
+	if abs, err := filepath.Abs(cfg.Build.CacheDir); err == nil {
+		cfg.Build.CacheDir = abs
+	}
+	if abs, err := filepath.Abs(cfg.Build.SitesDir); err == nil {
+		cfg.Build.SitesDir = abs
 	}
 	return cfg, nil
 }

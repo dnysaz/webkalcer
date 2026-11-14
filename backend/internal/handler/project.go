@@ -457,6 +457,11 @@ func (h *ProjectHandler) UpdateEnv(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save environment variables"})
 		return
 	}
+	// Proses SSR yang berjalan masih memakai env lama. Hentikan supaya
+	// request berikutnya menyalakan ulang server dengan env baru.
+	if h.processes != nil {
+		h.processes.Stop(project.Subdomain)
+	}
 	// Ambil key terbaru setelah merge.
 	merged, _ := h.projectStore.GetEnvVars(project.ID)
 	keys := make([]string, 0, len(merged))
@@ -704,6 +709,12 @@ func (h *ProjectHandler) RollbackDeployment(c *gin.Context) {
 
 	if record, err := h.deploymentStore.Create(project.ID, "success", fmt.Sprintf("rollback to release %s (deployment %s)", dep.Release, dep.ID)); err == nil {
 		_ = h.deploymentStore.SetRelease(record.ID, dep.Release)
+	}
+
+	// Rilis aktif berubah: hentikan proses SSR lama agar request berikutnya
+	// memakai kode dari rilis hasil rollback.
+	if h.processes != nil {
+		h.processes.Stop(project.Subdomain)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "rollback succeeded", "release": dep.Release})

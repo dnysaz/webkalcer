@@ -129,6 +129,20 @@ func (s *ProjectStore) Update(project *Project) error {
 	return err
 }
 
+// FailStaleBuilds menandai project yang masih pending/building sebagai gagal
+// saat worker start. Antrean build disimpan di memori, jadi job yang belum
+// sempat diproses saat backend restart tidak akan pernah dijalankan lagi.
+func (s *ProjectStore) FailStaleBuilds() (int64, error) {
+	res, err := s.db.Exec(
+		`UPDATE projects SET status = 'failed', updated_at = ? WHERE status IN ('pending', 'building')`,
+		time.Now(),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 func (s *ProjectStore) UpdateStatus(projectID string, status string) error {
 	query := `UPDATE projects SET status = ?, updated_at = ? WHERE id = ?`
 	_, err := s.db.Exec(query, status, time.Now(), projectID)

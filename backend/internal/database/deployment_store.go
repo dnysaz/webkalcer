@@ -69,6 +69,25 @@ func (s *DeploymentStore) ClearByProjectID(projectID string) error {
 	return err
 }
 
+// FailStaleBuilding menandai deployment yang tertinggal di status "building"
+// sebagai gagal. Dipanggil saat worker start: build yang berjalan saat backend
+// mati/restart tidak akan pernah selesai, dan tanpa ini status menggantung
+// "Sedang build" selamanya.
+func (s *DeploymentStore) FailStaleBuilding(message string) (int64, error) {
+	res, err := s.db.Exec(
+		`UPDATE deployments
+		 SET status = 'failed',
+		     log = CASE WHEN log IS NULL OR log = '' THEN ? ELSE log || char(10) || ? END,
+		     updated_at = ?
+		 WHERE status = 'building'`,
+		message, message, time.Now(),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 func (s *DeploymentStore) UpdateStatus(deploymentID string, status string, log string) error {
 	query := `UPDATE deployments SET status = ?, log = ?, updated_at = ? WHERE id = ?`
 	_, err := s.db.Exec(query, status, log, time.Now(), deploymentID)

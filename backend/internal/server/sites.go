@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"webkalcer/backend/internal/config"
@@ -79,12 +81,27 @@ func SiteHandler(cfg *config.Config, projectStore *database.ProjectStore, pm *Pr
 				return
 			}
 			releasesDir := filepath.Join(filepath.Dir(sitesDir), ".releases", subdomain)
+			// Nama folder rilis acak (release-xxxx), jadi "terbaru" harus
+			// ditentukan dari mtime — bukan urutan nama.
 			if entries, err := os.ReadDir(releasesDir); err == nil && len(entries) > 0 {
-				latest := entries[len(entries)-1].Name()
-				indexPath = filepath.Join(releasesDir, latest, "index.html")
-				if _, err := os.Stat(indexPath); err == nil {
-					c.File(indexPath)
-					return
+				var latest string
+				var latestMod time.Time
+				for _, entry := range entries {
+					info, infoErr := entry.Info()
+					if infoErr != nil || !info.IsDir() {
+						continue
+					}
+					if latest == "" || info.ModTime().After(latestMod) {
+						latest = entry.Name()
+						latestMod = info.ModTime()
+					}
+				}
+				if latest != "" {
+					indexPath = filepath.Join(releasesDir, latest, "index.html")
+					if _, err := os.Stat(indexPath); err == nil {
+						c.File(indexPath)
+						return
+					}
 				}
 			}
 		}
@@ -140,9 +157,17 @@ func SiteHandler(cfg *config.Config, projectStore *database.ProjectStore, pm *Pr
 		// Cek apakah ada server entry point (SSR mode)
 		serverEntry := findServerEntry(root)
 		if serverEntry != "" {
-			// SSR mode: proxy ke Node.js process
-			port, err := pm.Start(project.Subdomain, serverEntry)
+			// SSR mode: proxy ke Node.js process. Env project diambil hanya
+			// saat proses benar-benar dinyalakan (bukan tiap request).
+			port, err := pm.Start(project.Subdomain, serverEntry, func() map[string]string {
+				vars, envErr := projectStore.GetEnvVars(project.ID)
+				if envErr != nil {
+					return nil
+				}
+				return vars
+			})
 			if err != nil {
+				log.Printf("SSR start failed for %s: %v", project.Subdomain, err)
 				c.String(http.StatusServiceUnavailable, "server is starting, please retry")
 				return
 			}
@@ -193,19 +218,37 @@ func packageHasStartScript(root string) bool {
 	return ok
 }
 
+// proxyCache menyimpan satu ReverseProxy per port supaya connection pool ke
+// proses Node.js dipakai ulang. Membuat proxy + Transport baru tiap request
+// membuat koneksi menumpuk (dan lambat).
+var proxyCache sync.Map // int -> *httputil.ReverseProxy
+
 // proxyToPort mem-proxy request ke port tertentu.
 func proxyToPort(c *gin.Context, port int) {
+	if cached, ok := proxyCache.Load(port); ok {
+		cached.(*httputil.ReverseProxy).ServeHTTP(c.Writer, c.Request)
+		return
+	}
+
 	target, _ := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.Transport = &http.Transport{
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   32,
+		IdleConnTimeout:       90 * time.Second,
 		ResponseHeaderTimeout: 30 * time.Second,
 	}
+	// -1 = flush setiap write, penting untuk streaming (SSE/HTML bertahap).
+	proxy.FlushInterval = -1
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		w.WriteHeader(http.StatusBadGateway)
+		// Header harus diset SEBELUM WriteHeader.
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write([]byte(renderErrorPage(http.StatusBadGateway, "Bad Gateway", "Backend not responding. Please try again later.", "Try again later")))
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte(renderErrorPage(http.StatusBadGateway, "Bad Gateway", "Backend not responding. Please try again later.", "Try again later")))
 	}
-	proxy.ServeHTTP(c.Writer, c.Request)
+
+	actual, _ := proxyCache.LoadOrStore(port, proxy)
+	actual.(*httputil.ReverseProxy).ServeHTTP(c.Writer, c.Request)
 }
 
 // serveStatic melayani file statis dari folder project.

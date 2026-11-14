@@ -82,7 +82,7 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
 	useradd --system --home "$BASE_DIR" --shell /usr/sbin/nologin "$APP_USER"
 fi
 
-mkdir -p "$BASE_DIR" "$BACKEND_DIR" "$BACKEND_DIR/data" "$FRONTEND_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer
+mkdir -p "$BASE_DIR" "$BACKEND_DIR" "$BACKEND_DIR/data" "$FRONTEND_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer /var/log/webkalcer/ssr
 chown -R "$APP_USER:$APP_GROUP" "$BASE_DIR" "$SITES_DIR" "$CACHE_DIR" /var/log/webkalcer
 
 # ---------- Build backend ----------
@@ -310,6 +310,22 @@ server {
 	$SSL_BLOCK
 	include /etc/nginx/snippets/webkalcer-realip.conf;
 
+	# SSE log build (deployment logs): buffering WAJIB mati agar baris log
+	# sampai realtime, dan timeout diperpanjang selama build berjalan.
+	# Harus di atas location /api/ (prefix match kalah dari regex).
+	location ~ ^/api/projects/[^/]+/deployments/[^/]+/logs$ {
+		proxy_pass http://webkalcer_backend;
+		proxy_http_version 1.1;
+		proxy_set_header Host \$host;
+		proxy_set_header X-Real-IP \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
+		proxy_buffering off;
+		proxy_cache off;
+		proxy_read_timeout 1h;
+		chunked_transfer_encoding on;
+	}
+
 	# API & auth -> backend
 	location /api/ {
 		proxy_pass http://webkalcer_backend;
@@ -373,6 +389,21 @@ server {
 
 	$SSL_BLOCK
 	include /etc/nginx/snippets/webkalcer-realip.conf;
+
+	# SSE log build (deployment logs): buffering WAJIB mati agar baris log
+	# sampai realtime, dan timeout diperpanjang selama build berjalan.
+	location ~ ^/api/projects/[^/]+/deployments/[^/]+/logs$ {
+		proxy_pass http://webkalcer_backend;
+		proxy_http_version 1.1;
+		proxy_set_header Host \$host;
+		proxy_set_header X-Real-IP \$remote_addr;
+		proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto \$wk_forwarded_proto;
+		proxy_buffering off;
+		proxy_cache off;
+		proxy_read_timeout 1h;
+		chunked_transfer_encoding on;
+	}
 
 	location / {
 		proxy_pass http://webkalcer_backend;

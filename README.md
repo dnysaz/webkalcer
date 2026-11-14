@@ -101,6 +101,20 @@ Untuk AI crawler/assistant: [`/llms.txt`](https://webkalcer.com/llms.txt) (ringk
 
 Lihat `deploy.sh` (jalankan di VPS Ubuntu/Debian) dan `api.md` untuk referensi endpoint.
 
+### Cara kerja build & hosting
+
+Setiap deployment berjalan di tiga fase, sehingga situs lama tetap melayani sampai versi baru siap:
+
+1. **Stage** — hasil build disalin ke `<SITES_DIR>/.releases/<subdomain>/release-*` tanpa menyentuh situs aktif.
+2. **Install (khusus SSR)** — untuk Next.js tanpa `output: "standalone"` dan server Node milik user, dependency produksi di-install ulang di folder rilis (`npm ci --omit=dev`, `pnpm install --prod`, `yarn install --production`, atau `bun install --production`). `node_modules` tidak pernah disalin dari workdir.
+3. **Activate** — symlink `<SITES_DIR>/<subdomain>` di-rename secara atomik. Rilis lama dipangkas (2 versi untuk SSR, 3 versi untuk statis) dan rilis aktif tidak pernah dihapus.
+
+Deteksi output bersifat eksplisit: `out/` (Next static export), `.next/standalone` (+ salinan `.next/static` dan `public/`), `dist/`, `build/`, `public/`, `server.js`, atau root statis. Build Next.js yang tidak runnable akan **gagal dengan pesan jelas** — root repo tidak pernah dipublikasikan.
+
+Proses SSR dijalankan dengan `NODE_ENV=production`, `HOSTNAME=127.0.0.1` (port internal tidak terbuka ke internet), `NODE_OPTIONS=--max-old-space-size=512`, dan env var project. Log proses ada di `/var/log/webkalcer/ssr/ssr-<subdomain>.log`; readiness dicek lewat HTTP sebelum trafik dialihkan, dan 20 baris log terakhir ditampilkan saat server gagal siap.
+
+Deployment yang tertinggal di status `building` (mis. backend restart/OOM saat build) otomatis ditandai `failed` saat worker start, jadi status tidak menggantung selamanya.
+
 ## Lisensi
 
 MIT — lihat file `LICENSE`.

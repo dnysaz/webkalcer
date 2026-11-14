@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func writeSite(t *testing.T, dir, content string) {
@@ -109,5 +110,68 @@ func TestPublishSkipsHeavyFolders(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(dst, "node_modules")); !os.IsNotExist(err) {
 		t.Fatalf("node_modules ikut dipublikasikan (err=%v)", err)
+	}
+}
+
+// Cache build Next.js tidak boleh ikut dipublikasikan: isinya bisa ratusan MB
+// dan tidak dipakai saat runtime.
+func TestPublishSkipsNextBuildCache(t *testing.T) {
+	root := t.TempDir()
+	src := filepath.Join(root, "src")
+	dst := filepath.Join(root, "sites", "demo")
+
+	writeSite(t, src, "ok")
+	cacheFile := filepath.Join(src, ".next", "cache", "webpack", "pack.gz")
+	if err := os.MkdirAll(filepath.Dir(cacheFile), 0o755); err != nil {
+		t.Fatalf("gagal membuat cache: %v", err)
+	}
+	if err := os.WriteFile(cacheFile, []byte("cache"), 0o644); err != nil {
+		t.Fatalf("gagal menulis cache: %v", err)
+	}
+	// BUILD_ID tetap harus ikut karena dibutuhkan saat runtime.
+	if err := os.WriteFile(filepath.Join(src, ".next", "BUILD_ID"), []byte("abc"), 0o644); err != nil {
+		t.Fatalf("gagal menulis BUILD_ID: %v", err)
+	}
+
+	if err := publish(src, dst); err != nil {
+		t.Fatalf("publish gagal: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, ".next", "cache")); !os.IsNotExist(err) {
+		t.Fatalf(".next/cache ikut dipublikasikan (err=%v)", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, ".next", "BUILD_ID")); err != nil {
+		t.Fatalf(".next/BUILD_ID hilang: %v", err)
+	}
+}
+
+// Rilis yang sedang aktif tidak boleh dihapus oleh prune, meski sudah tua
+// (mis. setelah rollback ke rilis lama).
+func TestPruneKeepsActiveRelease(t *testing.T) {
+	dir := t.TempDir()
+	names := []string{"release-old", "release-mid", "release-new"}
+	base := time.Now().Add(-time.Hour)
+	for i, name := range names {
+		path := filepath.Join(dir, name)
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		// mtime eksplisit supaya urutan "terbaru" deterministik.
+		ts := base.Add(time.Duration(i) * time.Minute)
+		if err := os.Chtimes(path, ts, ts); err != nil {
+			t.Fatalf("chtimes: %v", err)
+		}
+	}
+
+	active := filepath.Join(dir, "release-old")
+	pruneReleases(dir, 1, active)
+
+	if _, err := os.Stat(active); err != nil {
+		t.Fatalf("rilis aktif ikut terhapus: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "release-new")); err != nil {
+		t.Fatalf("rilis terbaru ikut terhapus: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "release-mid")); !os.IsNotExist(err) {
+		t.Fatalf("rilis lama seharusnya dipangkas (err=%v)", err)
 	}
 }
