@@ -80,7 +80,9 @@ func SiteHandler(cfg *config.Config, projectStore *database.ProjectStore, pm *Pr
 				c.File(indexPath)
 				return
 			}
-			releasesDir := filepath.Join(filepath.Dir(sitesDir), ".releases", subdomain)
+			// Folder rilis ada di <SITES_DIR>/.releases/<subdomain>
+			// (target publish = <SITES_DIR>/<subdomain>).
+			releasesDir := filepath.Join(sitesDir, ".releases", subdomain)
 			// Nama folder rilis acak (release-xxxx), jadi "terbaru" harus
 			// ditentukan dari mtime — bukan urutan nama.
 			if entries, err := os.ReadDir(releasesDir); err == nil && len(entries) > 0 {
