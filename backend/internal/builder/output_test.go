@@ -146,7 +146,7 @@ func TestCopyTreePreservesSymlinks(t *testing.T) {
 		t.Skipf("symlink tidak didukung: %v", err)
 	}
 
-	if err := copyTree(src, dst, ""); err != nil {
+	if err := copyTree(src, dst); err != nil {
 		t.Fatalf("copyTree: %v", err)
 	}
 	got, err := os.Readlink(filepath.Join(dst, "link.txt"))

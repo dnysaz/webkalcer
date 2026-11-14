@@ -175,3 +175,72 @@ func TestPruneKeepsActiveRelease(t *testing.T) {
 		t.Fatalf("rilis lama seharusnya dipangkas (err=%v)", err)
 	}
 }
+
+// Regresi: rilis baru tidak boleh me-reuse file dari rilis lama berdasarkan
+// size + mtime. Dua build bisa menghasilkan file sepanjang sama dengan mtime
+// identik tapi isi berbeda; hardlink membuat situs menyajikan konten lama dan
+// membuat rilis baru & lama berbagi inode (rollback ikut rusak).
+func TestPublishDoesNotReuseStaleContent(t *testing.T) {
+	root := t.TempDir()
+	src := filepath.Join(root, "src")
+	dst := filepath.Join(root, "sites", "demo")
+
+	writeSite(t, src, "v1")
+	oldMtime := time.Now().Add(-time.Hour)
+	index := filepath.Join(src, "index.html")
+	if err := os.Chtimes(index, oldMtime, oldMtime); err != nil {
+		t.Fatalf("chtimes: %v", err)
+	}
+
+	if err := publish(src, dst); err != nil {
+		t.Fatalf("publish pertama: %v", err)
+	}
+	firstRelease, err := CurrentReleaseName(dst)
+	if err != nil {
+		t.Fatalf("CurrentReleaseName: %v", err)
+	}
+
+	// Isi berubah, panjang sama, dan mtime dikembalikan ke nilai lama.
+	if err := os.WriteFile(index, []byte("v2"), 0o644); err != nil {
+		t.Fatalf("tulis v2: %v", err)
+	}
+	if err := os.Chtimes(index, oldMtime, oldMtime); err != nil {
+		t.Fatalf("chtimes v2: %v", err)
+	}
+
+	if err := publish(src, dst); err != nil {
+		t.Fatalf("publish kedua: %v", err)
+	}
+	if got := readIndex(t, dst); got != "v2" {
+		t.Fatalf("isi situs setelah publish kedua = %q, ingin \"v2\"", got)
+	}
+
+	secondRelease, err := CurrentReleaseName(dst)
+	if err != nil {
+		t.Fatalf("CurrentReleaseName kedua: %v", err)
+	}
+	if firstRelease == secondRelease {
+		t.Fatalf("publish kedua tidak membuat rilis baru")
+	}
+
+	oldFile := filepath.Join(filepath.Dir(dst), ".releases", "demo", firstRelease, "index.html")
+	newFile := filepath.Join(dst, "index.html")
+	oldInfo, err := os.Stat(oldFile)
+	if err != nil {
+		t.Fatalf("stat rilis lama: %v", err)
+	}
+	newInfo, err := os.Stat(newFile)
+	if err != nil {
+		t.Fatalf("stat rilis baru: %v", err)
+	}
+	if os.SameFile(oldInfo, newInfo) {
+		t.Fatal("rilis baru dan lama berbagi inode (hardlink) — rollback bisa merusak data")
+	}
+	oldContent, err := os.ReadFile(oldFile)
+	if err != nil {
+		t.Fatalf("baca rilis lama: %v", err)
+	}
+	if string(oldContent) != "v1" {
+		t.Fatalf("isi rilis lama berubah menjadi %q, ingin tetap \"v1\"", oldContent)
+	}
+}

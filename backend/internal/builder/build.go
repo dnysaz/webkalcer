@@ -534,14 +534,14 @@ func copyStandaloneAssets(workDir, standaloneDir string, logf func(string)) erro
 	staticSrc := filepath.Join(workDir, ".next", "static")
 	if dirExists(staticSrc) {
 		logf("copying .next/static into the standalone output")
-		if err := copyTree(staticSrc, filepath.Join(standaloneDir, ".next", "static"), ""); err != nil {
+		if err := copyTree(staticSrc, filepath.Join(standaloneDir, ".next", "static")); err != nil {
 			return fmt.Errorf("failed to copy .next/static: %w", err)
 		}
 	}
 	publicSrc := filepath.Join(workDir, "public")
 	if dirExists(publicSrc) {
 		logf("copying public/ into the standalone output")
-		if err := copyTree(publicSrc, filepath.Join(standaloneDir, "public"), ""); err != nil {
+		if err := copyTree(publicSrc, filepath.Join(standaloneDir, "public")); err != nil {
 			return fmt.Errorf("failed to copy public/: %w", err)
 		}
 	}
@@ -752,42 +752,15 @@ func stageRelease(src, dst string) (string, error) {
 		return "", fmt.Errorf("failed to prepare release folder: %w", err)
 	}
 
-	previousRelease := latestRelease(releasesDir)
-
 	release, err := os.MkdirTemp(releasesDir, "release-")
 	if err != nil {
 		return "", fmt.Errorf("failed to prepare release folder: %w", err)
 	}
-	if err := copyTree(src, release, previousRelease); err != nil {
+	if err := copyTree(src, release); err != nil {
 		_ = os.RemoveAll(release)
 		return "", fmt.Errorf("failed to copy build output: %w", err)
 	}
 	return release, nil
-}
-
-// latestRelease mengembalikan folder rilis terbaru sebagai referensi hardlink
-// incremental.
-func latestRelease(releasesDir string) string {
-	entries, err := os.ReadDir(releasesDir)
-	if err != nil {
-		return ""
-	}
-	var latest string
-	var latestMod time.Time
-	for _, e := range entries {
-		info, err := e.Info()
-		if err != nil {
-			continue
-		}
-		if latest == "" || info.ModTime().After(latestMod) {
-			latest = e.Name()
-			latestMod = info.ModTime()
-		}
-	}
-	if latest == "" {
-		return ""
-	}
-	return filepath.Join(releasesDir, latest)
 }
 
 // activateRelease mengarahkan symlink <sitesDir>/<subdomain> ke folder rilis.
@@ -869,7 +842,14 @@ func pruneReleases(dir string, keep int, active string) {
 	}
 }
 
-func copyTree(src, dst string, previousRelease string) error {
+// copyTree menyalin seluruh isi src ke dst.
+//
+// File SELALU disalin ulang (tidak ada hardlink/reuse dari rilis sebelumnya):
+// size + mtime bukan identitas isi yang sah — dua build bisa menghasilkan file
+// dengan panjang dan mtime identik tapi isi berbeda, dan hardlink membuat rilis
+// baru & lama berbagi inode sehingga rollback bisa menyajikan/mengubah data
+// yang salah.
+func copyTree(src, dst string) error {
 	if err := os.MkdirAll(dst, 0o755); err != nil {
 		return err
 	}
@@ -909,23 +889,6 @@ func copyTree(src, dst string, previousRelease string) error {
 		}
 		if info.IsDir() {
 			return os.MkdirAll(target, 0o755)
-		}
-
-		// Jika ada previousRelease dan file sudah ada di previousRelease dengan ukuran dan waktu yang sama,
-		// gunakan hardlink agar tidak perlu menyalin ulang.
-		if previousRelease != "" {
-			prevPath := filepath.Join(previousRelease, rel)
-			if info.IsDir() {
-				prevInfo, _ := os.Stat(prevPath)
-				if prevInfo != nil && prevInfo.IsDir() && prevInfo.ModTime().Equal(info.ModTime()) && prevInfo.Size() == info.Size() {
-					return nil
-				}
-			} else {
-				prevInfo, _ := os.Stat(prevPath)
-				if prevInfo != nil && prevInfo.Size() == info.Size() && prevInfo.ModTime().Equal(info.ModTime()) {
-					return os.Link(prevPath, target)
-				}
-			}
 		}
 
 		in, err := os.Open(path)
