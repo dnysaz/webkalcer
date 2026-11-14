@@ -11,9 +11,12 @@ import { useEffect, useRef, useState } from "react";
 export function CopyButton({
   text,
   label = "Salin",
+  className,
 }: {
   text: string;
   label?: string;
+  /** Jika diisi, mengganti gaya default — dipakai untuk panel berlatar gelap. */
+  className?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,7 +57,9 @@ export function CopyButton({
       title={copied ? "Tersalin!" : label}
       aria-label={copied ? "Tersalin" : label}
       aria-live="polite"
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-sm font-medium text-blue transition-colors hover:bg-line"
+      className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-medium transition-colors ${
+        className ?? "bg-white text-blue hover:bg-line"
+      }`}
     >
       <i
         className={

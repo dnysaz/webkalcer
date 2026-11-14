@@ -100,13 +100,15 @@ func (w *Worker) process(job Job) {
 
 	logf := func(line string) {
 		mu.Lock()
-		if line == "" || len(lines) >= 500 {
+		if line == "" || len(lines) >= 2000 {
 			mu.Unlock()
 			return
 		}
 		lines = append(lines, fmt.Sprintf("%s %s", time.Now().Format("15:04:05"), line))
-		// Batasi write ke database maksimal sekali per detik.
-		due := time.Since(lastFlush) >= time.Second
+		// Tulis progres ke database maksimal 4x/detik. Cukup cepat untuk
+		// tampilan log realtime (SSE membaca tiap 250 ms) tanpa membebani
+		// SQLite dengan ribuan write per build.
+		due := time.Since(lastFlush) >= 250*time.Millisecond
 		if due {
 			lastFlush = time.Now()
 		}

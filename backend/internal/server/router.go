@@ -135,6 +135,7 @@ func NewRouter(cfg *config.Config, db *database.Database, worker *builder.Worker
 		api.GET("/projects/:id/webhook", projectHandler.GetWebhookInfo)
 		api.PUT("/projects/:id/domain", RateLimit(20, time.Minute), projectHandler.UpdateCustomDomain)
 		api.GET("/projects/:id/deployments", projectHandler.ListDeployments)
+		api.GET("/projects/:id/deployments/:deploymentID/logs", projectHandler.StreamDeploymentLog)
 		api.POST("/projects/:id/deployments/:deploymentID/rollback", RateLimit(10, time.Minute), projectHandler.RollbackDeployment)
 		api.DELETE("/projects/:id/deployments", projectHandler.ClearDeployments)
 		api.GET("/projects/:id/repo", projectHandler.GetRepoInfo)

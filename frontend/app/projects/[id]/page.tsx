@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/dashboard/auth-provider";
 import { ConfirmDialog, InfoDialog, type ModalTone } from "@/components/dashboard/confirm";
 import { CopyButton } from "@/components/dashboard/copy-button";
+import { BuildLog } from "@/components/dashboard/build-log";
 
 export const dynamic = "force-dynamic";
 import { StatusBadge } from "@/components/dashboard/status-badge";
@@ -17,6 +18,7 @@ import {
   type WebhookInfo,
   getProject,
   listDeployments,
+  deploymentLogStreamUrl,
   redeploy,
   rollback,
   clearDeployments,
@@ -126,27 +128,115 @@ export default function ProjectDetailPage() {
     }
   };
 
-  // Auto-poll saat ada deployment yang masih building
+  // Polling cadangan (5 detik) saat ada deployment yang masih berjalan.
+  // Log realtime ditangani SSE di bawah; polling ini hanya jaring pengaman
+  // kalau koneksi streaming diblokir proxy/browser.
   useEffect(() => {
     if (!polling) return;
-    const t = setInterval(async () => {
+    let cancelled = false;
+
+    const tick = async () => {
       try {
         const ds = await listDeployments(params.id!);
-        setDeployments(ds);
+        if (cancelled) return;
+        setDeployments((prev) =>
+          ds.map((d) => {
+            const old = prev.find((x) => x.id === d.id);
+            // Jangan memangkas log yang sudah masuk lewat SSE.
+            return old && old.log.length > d.log.length
+              ? { ...d, log: old.log }
+              : d;
+          }),
+        );
         const latest = ds[0];
         if (latest && (latest.status === "building" || latest.status === "pending")) {
           return; // keep polling
         }
         setPolling(false);
-        // refresh project status
         const p = await getProject(params.id!);
-        setProject(p);
+        if (!cancelled) setProject(p);
       } catch {
         // silent
       }
-    }, 3000);
-    return () => clearInterval(t);
+    };
+
+    void tick();
+    const t = setInterval(tick, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, [polling, params.id]);
+
+  // Log realtime via SSE: begitu worker menulis baris baru ke database,
+  // event "log" langsung masuk sehingga log bertambah tanpa reload.
+  const activeDeploymentId = deployments.find(
+    (d) => d.status === "building" || d.status === "pending",
+  )?.id;
+
+  useEffect(() => {
+    if (!activeDeploymentId) return;
+
+    const es = new EventSource(
+      deploymentLogStreamUrl(params.id!, activeDeploymentId),
+      { withCredentials: true },
+    );
+
+    const patch = (fn: (d: Deployment) => Deployment) =>
+      setDeployments((prev) =>
+        prev.map((d) => (d.id === activeDeploymentId ? fn(d) : d)),
+      );
+
+    es.addEventListener("log", (event) => {
+      const { chunk } = JSON.parse((event as MessageEvent).data) as {
+        chunk: string;
+      };
+      patch((d) => ({ ...d, log: d.log + chunk }));
+    });
+
+    es.addEventListener("reset", (event) => {
+      const { log } = JSON.parse((event as MessageEvent).data) as {
+        log: string;
+      };
+      patch((d) => ({ ...d, log }));
+    });
+
+    es.addEventListener("status", (event) => {
+      const status = JSON.parse(
+        (event as MessageEvent).data,
+      ) as Deployment["status"];
+      patch((d) => ({ ...d, status }));
+    });
+
+    es.addEventListener("done", async () => {
+      es.close();
+      try {
+        const [p, ds] = await Promise.all([
+          getProject(params.id!),
+          listDeployments(params.id!),
+        ]);
+        setProject(p);
+        setDeployments((prev) =>
+          ds.map((d) => {
+            const old = prev.find((x) => x.id === d.id);
+            return old && old.log.length > d.log.length
+              ? { ...d, log: old.log }
+              : d;
+          }),
+        );
+      } catch {
+        // abaikan: polling cadangan akan menyusul
+      }
+      setPolling(false);
+    });
+
+    es.onerror = () => {
+      // Biarkan polling cadangan mengambil alih.
+      es.close();
+    };
+
+    return () => es.close();
+  }, [activeDeploymentId, params.id]);
 
   const handleDeploy = async () => {
     setDeployLoading(true);
@@ -443,13 +533,23 @@ export default function ProjectDetailPage() {
           </div>
 
           {isBuilding && (
-            <div className="mb-4 rounded-2xl bg-orange/10 p-4 text-base text-ink">
-              Build sedang berjalan… halaman akan diperbarui otomatis setiap 3 detik.
+            <div className="mb-4 flex items-center gap-2.5 rounded-2xl bg-orange/10 p-4 text-base text-ink">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange" />
+              </span>
+              Build sedang berjalan — log mengalir langsung di bawah ini.
             </div>
           )}
 
           {deployments.length === 0 ? (
-            <p className="text-base text-mute">Belum ada riwayat deployment.</p>
+            polling ? (
+              <p className="text-base text-mute">
+                Menunggu worker memulai build…
+              </p>
+            ) : (
+              <p className="text-base text-mute">Belum ada riwayat deployment.</p>
+            )
           ) : (
             <div className="space-y-3">
               {deployments.map((d) => (
@@ -477,10 +577,15 @@ export default function ProjectDetailPage() {
                       </button>
                     )}
                   </div>
-                  <details className="mt-3 rounded-2xl bg-soft p-3 text-xs font-mono text-mute">
-                    <summary className="cursor-pointer underline offset-2">Tampilkan log</summary>
-                    <pre className="mt-2 whitespace-pre-wrap break-words">{d.log}</pre>
-                  </details>
+                  <div className="mt-3">
+                    <BuildLog
+                      log={d.log}
+                      status={d.status}
+                      defaultOpen={
+                        d.status === "building" || d.status === "pending"
+                      }
+                    />
+                  </div>
                 </div>
               ))}
             </div>

@@ -230,6 +230,14 @@ export async function redeploy(id: string): Promise<void> {
   await api(`/api/projects/${id}/deploy`, { method: "POST" });
 }
 
+/** URL SSE untuk log deployment realtime (dipakai EventSource). */
+export function deploymentLogStreamUrl(
+  projectId: string,
+  deploymentId: string,
+): string {
+  return `${API_URL}/api/projects/${projectId}/deployments/${deploymentId}/logs`;
+}
+
 export async function listDeployments(id: string): Promise<Deployment[]> {
   const data = await api<{ deployments: Deployment[] | null }>(
     `/api/projects/${id}/deployments`,

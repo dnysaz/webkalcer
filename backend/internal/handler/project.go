@@ -551,6 +551,115 @@ func (h *ProjectHandler) ListDeployments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"deployments": deployments})
 }
 
+// StreamDeploymentLog mengalirkan log satu deployment secara realtime (SSE).
+// Frontend berlangganan lewat EventSource sehingga baris build muncul begitu
+// worker menuliskannya ke database — tanpa polling 3 detik dan tanpa reload.
+//
+// Event yang dikirim:
+//   - status : JSON string status deployment ("building", "success", ...)
+//   - log    : {"chunk": "..."} potongan log baru (append)
+//   - reset  : {"log": "..."} log penuh (bila isi log bergeser)
+//   - done   : JSON string status akhir; koneksi ditutup setelahnya
+func (h *ProjectHandler) StreamDeploymentLog(c *gin.Context) {
+	project, ok := h.ownedProject(c)
+	if !ok {
+		return
+	}
+	if h.deploymentStore == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "deployment history is unavailable"})
+		return
+	}
+	deploymentID, err := parseID(c.Param("deploymentID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid deployment id"})
+		return
+	}
+	dep, err := h.deploymentStore.GetByID(deploymentID)
+	if err != nil || dep == nil || dep.ProjectID != project.ID {
+		c.JSON(http.StatusNotFound, gin.H{"error": "deployment not found"})
+		return
+	}
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache, no-transform")
+	c.Header("Connection", "keep-alive")
+	// Matikan buffering nginx supaya setiap event langsung sampai ke browser.
+	c.Header("X-Accel-Buffering", "no")
+	c.Status(http.StatusOK)
+
+	send := func(event string, payload any) bool {
+		raw, err := json.Marshal(payload)
+		if err != nil {
+			return false
+		}
+		if _, err := fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", event, raw); err != nil {
+			return false
+		}
+		c.Writer.Flush()
+		return true
+	}
+
+	status := dep.Status
+	if !send("status", status) {
+		return
+	}
+	sent := ""
+	if dep.Log != "" {
+		if !send("log", gin.H{"chunk": dep.Log}) {
+			return
+		}
+		sent = dep.Log
+	}
+
+	// Poll database ringan (250 ms) — worker menulis progres maksimal 4x/detik,
+	// jadi latensi tampil log praktis < 1 detik.
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+	// Heartbeat menjaga koneksi tetap hidup melewati nginx/Cloudflare.
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
+
+	for {
+		select {
+		case <-c.Request.Context().Done():
+			return
+		case <-heartbeat.C:
+			if _, err := fmt.Fprint(c.Writer, ": ping\n\n"); err != nil {
+				return
+			}
+			c.Writer.Flush()
+		case <-ticker.C:
+			current, err := h.deploymentStore.GetByID(deploymentID)
+			if err != nil {
+				return
+			}
+			switch {
+			case strings.HasPrefix(current.Log, sent) && len(current.Log) > len(sent):
+				if !send("log", gin.H{"chunk": current.Log[len(sent):]}) {
+					return
+				}
+				sent = current.Log
+			case current.Log != sent:
+				// Isi log bergeser (mis. dipotong) — kirim ulang semuanya.
+				if !send("reset", gin.H{"log": current.Log}) {
+					return
+				}
+				sent = current.Log
+			}
+			if current.Status != status {
+				status = current.Status
+				if !send("status", status) {
+					return
+				}
+			}
+			if status == "success" || status == "failed" {
+				send("done", status)
+				return
+			}
+		}
+	}
+}
+
 // RollbackDeployment mempromosikan folder rilis dari deployment lama menjadi
 // versi aktif. Tiga rilis terbaru disimpan, jadi deployment yang lebih lama
 // dari itu tidak bisa dipulihkan.

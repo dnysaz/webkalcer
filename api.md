@@ -78,6 +78,7 @@ Backend hanya menerima origin dari env `CORS_ORIGINS` (default: `http://localhos
 | GET | `/api/projects/:id/webhook` | URL + secret webhook | — |
 | PUT | `/api/projects/:id/domain` | Set/hapus custom domain | 20/menit |
 | GET | `/api/projects/:id/deployments` | Riwayat deployment + log | — |
+| GET | `/api/projects/:id/deployments/:deploymentID/logs` | Stream log build realtime (SSE) | — |
 | POST | `/api/projects/:id/deployments/:deploymentID/rollback` | Rollback ke rilis lama | 10/menit |
 | DELETE | `/api/projects/:id/deployments` | Bersihkan riwayat deployment | — |
 | GET | `/api/projects/:id/repo` | Detail repo GitHub project | — |
@@ -524,6 +525,21 @@ Aturan domain: hostname saja (tanpa `http://`, path, port), minimal 2 label, TLD
 
 Maks 20, terbaru dulu. Gunakan untuk polling status build + menampilkan log.
 
+### `GET /api/projects/:id/deployments/:deploymentID/logs` (SSE)
+
+`text/event-stream`. Kirim cookie sesi (`EventSource` dengan
+`withCredentials: true`). Event yang diterima:
+
+| event | data | arti |
+|---|---|---|
+| `status` | `"building"` / `"success"` / `"failed"` | status deployment berubah |
+| `log` | `{"chunk": "..."}` | potongan log baru — append ke log yang ada |
+| `reset` | `{"log": "..."}` | ganti seluruh log (bila isi bergeser) |
+| `done` | `"success"` / `"failed"` | status akhir; koneksi ditutup |
+
+Server mengirim heartbeat `: ping` tiap 15 detik. Streaming berhenti sendiri
+saat build selesai/gagal.
+
 ### `POST /api/projects/:id/deployments/:deploymentID/rollback`
 
 ```json
@@ -687,13 +703,14 @@ fd.append("file", file); // file .zip
 await api("/api/projects/upload", { method: "POST", body: fd });
 ```
 
-### Polling build
-
-Tidak ada endpoint realtime/websocket. Pola yang disarankan:
+### Log build realtime (SSE)
 
 1. `POST /api/projects/:id/deploy` (atau buat project)
-2. Poll `GET /api/projects/:id/deployments` tiap 2–3 detik
-3. Berhenti saat deployment teratas `success` atau `failed`
+2. Ambil deployment terbaru dari `GET /api/projects/:id/deployments`
+3. Buka `EventSource` ke `GET /api/projects/:id/deployments/:deploymentID/logs`
+   (`withCredentials: true`), append tiap event `log`, tutup saat `done`
+4. Polling `GET /api/projects/:id/deployments` tiap 5 detik cukup sebagai
+   cadangan bila streaming diblokir proxy
 
 ### Lampiran: hal yang belum ada di API
 
